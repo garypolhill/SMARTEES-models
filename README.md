@@ -1,2 +1,6 @@
 # SMARTEES-models
-NetLogo source code from the models created for the SMARTEES project
+This repository contains just the NetLogo source code from models built for the [SMARTEES project](https://local-social-innovation.eu/), which was funded by the European Commission's [Horizon 2020](https://ec.europa.eu/programmes/horizon2020/en/home) Programme under Grant Agreement Number 763912.
+
+The project featured five case study 'clusters', each cluster having two 'main reference' case study and one 'premium follower' case studies. One or more models were built and/or reconfigured from other models for each cluster. There is one subfolder in the repository for each cluster.
+
+The models are empirical agent-based models built using [NetLogo](https://ccs.northwestern.edu/netlogo), and as such, draw on GIS, census, and other (secondary) data, as well as primary data collected by the project. GIS data is typically based on [OpenStreetMap](https://www.openstreetmap.org/), so some of these data you may be able to download for yourself. Some SMARTEES data is available on [Zenodo](https://zenodo.org/communities/smartees/). Other secondary data used should be documented in the models. Hence, while we have not provided the data needed to run the models (to avoid licensing, confidentiality and other legal and contractual issues), it may be possible to obtain these data yourself.
