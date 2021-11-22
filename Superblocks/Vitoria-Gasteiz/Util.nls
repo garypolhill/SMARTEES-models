@@ -1,0 +1,222 @@
+;<summary>
+; reports a score drawn from a beta distribution with two shape parapeters: alpha and beta
+; values for a population of 100
+; #alpha = 4, #beta = 4 - > symmetric with a mean close to 0
+;</summary>
+to-report Random-Beta [ #alpha #beta ]
+  let Xa random-gamma #alpha 1
+  let Xb random-gamma #beta 1
+  let result Xa / (Xa + Xb)
+  report result
+
+end
+
+to-report Normalized-Min-Max [norm-variable min-old max-old min-new max-new]
+  let norm min-new + (((norm-variable - min-old) * (max-new - min-new)) / (max-old - min-old))
+  report norm
+end
+
+;<summary>
+;reports the current month number based on the current tick
+;</summary>
+to-report Get-Month
+  let tmp round (remainder (ticks / 2)  12)
+  if tmp = 0 [set tmp  12]
+  report tmp
+end
+
+;<summary>
+;reports the current year  based on the current tick and the initial-year
+;</summary>
+to-report Get-Year
+  let tmp 0
+  ifelse month = 12 [
+    set tmp floor ((ticks - 1) / 24)
+  
+  ][
+    set tmp floor (ticks / 24)
+  ]
+  report initial-year + tmp
+end
+
+to-report Random-Normal-Trunc [mid dev mmin mmax]
+  ; creating a trunc normal function to be used for tuncating the normal distribution between mmin and mmax values
+  ; good for now, but the goeal would be to get to the normal from beta (using gamma as a start)
+  let result random-normal mid dev
+  if result < mmin or result > mmax
+  [report Random-Normal-Trunc mid dev mmin mmax]
+  report result
+end
+
+to draw-circle
+  ;clear-drawing
+  create-turtles 1
+    [ set color gray - 3
+      set size 2 * social-reach
+      set xcor [xcor] of humat 1956
+      set ycor [ycor] of humat 1956
+      set shape "circle"
+      ;stamp
+      ;die 
+  ]
+  ask humat 1956 [ask my-out-adjacents [show-link]]
+end
+
+
+to-report Split [value]
+  let current-position  0
+  let last-trim  0
+  let tmp-substring ""
+  let trimed []
+  while [current-position != length value] [
+    if item current-position value = ","[
+      set tmp-substring substring value last-trim current-position
+      set last-trim current-position + 1
+      set trimed lput tmp-substring trimed
+    ]
+    set current-position current-position + 1
+  ]
+  
+  if last-trim = 0 [
+    set trimed lput value trimed
+    set last-trim length value
+  ]
+  
+  if current-position - last-trim > 2 [
+    set trimed lput substring value last-trim current-position trimed
+  ]
+  show trimed
+  report trimed
+end
+
+to Retrieve-Histograms
+  
+  ;wellness satisfaction A
+  let WA1 count humats with [wellness-satisfaction-A >= -1.00 and wellness-satisfaction-A < -0.95]
+  let WA2 count humats with [wellness-satisfaction-A >= -0.95 and wellness-satisfaction-A < -0.90]
+  let WA3 count humats with [wellness-satisfaction-A >= -0.90 and wellness-satisfaction-A < -0.85]
+  let WA4 count humats with [wellness-satisfaction-A >= -0.85 and wellness-satisfaction-A < -0.80]
+  let WA5 count humats with [wellness-satisfaction-A >= -0.80 and wellness-satisfaction-A < -0.75]
+  let WA6 count humats with [wellness-satisfaction-A >= -0.75 and wellness-satisfaction-A < -0.70]
+  let WA7 count humats with [wellness-satisfaction-A >= -0.70 and wellness-satisfaction-A < -0.65]
+  let WA8 count humats with [wellness-satisfaction-A >= -0.65 and wellness-satisfaction-A < -0.60]
+  let WA9 count humats with [wellness-satisfaction-A >= -0.60 and wellness-satisfaction-A < -0.55]
+  let WA10 count humats with [wellness-satisfaction-A >= -0.55 and wellness-satisfaction-A < -0.50]
+  let WA11 count humats with [wellness-satisfaction-A >= -0.50 and wellness-satisfaction-A < -0.45]
+  let WA12 count humats with [wellness-satisfaction-A >= -0.45 and wellness-satisfaction-A < -0.40]
+  let WA13 count humats with [wellness-satisfaction-A >= -0.40 and wellness-satisfaction-A < -0.35]
+  let WA14 count humats with [wellness-satisfaction-A >= -0.35 and wellness-satisfaction-A < -0.30]
+  let WA15 count humats with [wellness-satisfaction-A >= -0.30 and wellness-satisfaction-A < -0.25]
+  let WA16 count humats with [wellness-satisfaction-A >= -0.25 and wellness-satisfaction-A < -0.20]
+  let WA17 count humats with [wellness-satisfaction-A >= -0.20 and wellness-satisfaction-A < -0.15]
+  let WA18 count humats with [wellness-satisfaction-A >= -0.15 and wellness-satisfaction-A < -0.10]
+  let WA19 count humats with [wellness-satisfaction-A >= -0.10 and wellness-satisfaction-A < -0.05]
+  let WA20 count humats with [wellness-satisfaction-A >= -0.05 and wellness-satisfaction-A < 0.00]
+  
+  let WA21 count humats with [wellness-satisfaction-A <= 1.00 and wellness-satisfaction-A > 0.95]
+  let WA22 count humats with [wellness-satisfaction-A <= 0.95 and wellness-satisfaction-A > 0.90]
+  let WA23 count humats with [wellness-satisfaction-A <= 0.90 and wellness-satisfaction-A > 0.85]
+  let WA24 count humats with [wellness-satisfaction-A <= 0.85 and wellness-satisfaction-A > 0.80]
+  let WA25 count humats with [wellness-satisfaction-A <= 0.80 and wellness-satisfaction-A > 0.75]
+  let WA26 count humats with [wellness-satisfaction-A <= 0.75 and wellness-satisfaction-A > 0.70]
+  let WA27 count humats with [wellness-satisfaction-A <= 0.70 and wellness-satisfaction-A > 0.65]
+  let WA28 count humats with [wellness-satisfaction-A <= 0.65 and wellness-satisfaction-A > 0.60]
+  let WA29 count humats with [wellness-satisfaction-A <= 0.60 and wellness-satisfaction-A > 0.55]
+  let WA30 count humats with [wellness-satisfaction-A <= 0.55 and wellness-satisfaction-A > 0.50]
+  let WA31 count humats with [wellness-satisfaction-A <= 0.50 and wellness-satisfaction-A > 0.45]
+  let WA32 count humats with [wellness-satisfaction-A <= 0.45 and wellness-satisfaction-A > 0.40]
+  let WA33 count humats with [wellness-satisfaction-A <= 0.40 and wellness-satisfaction-A > 0.35]
+  let WA34 count humats with [wellness-satisfaction-A <= 0.35 and wellness-satisfaction-A > 0.30]
+  let WA35 count humats with [wellness-satisfaction-A <= 0.30 and wellness-satisfaction-A > 0.25]
+  let WA36 count humats with [wellness-satisfaction-A <= 0.25 and wellness-satisfaction-A > 0.20]
+  let WA37 count humats with [wellness-satisfaction-A <= 0.20 and wellness-satisfaction-A > 0.15]
+  let WA38 count humats with [wellness-satisfaction-A <= 0.15 and wellness-satisfaction-A > 0.10]
+  let WA39 count humats with [wellness-satisfaction-A <= 0.10 and wellness-satisfaction-A > 0.05]
+  let WA40 count humats with [wellness-satisfaction-A <= 0.05 and wellness-satisfaction-A > 0.00]
+  
+  ;wellness satisfactionB
+  let WB1 count humats with [wellness-satisfaction-B >= -1.00 and wellness-satisfaction-B < -0.95]
+  let WB2 count humats with [wellness-satisfaction-B >= -0.95 and wellness-satisfaction-B < -0.90]
+  let WB3 count humats with [wellness-satisfaction-B >= -0.90 and wellness-satisfaction-B < -0.85]
+  let WB4 count humats with [wellness-satisfaction-B >= -0.85 and wellness-satisfaction-B < -0.80]
+  let WB5 count humats with [wellness-satisfaction-B >= -0.80 and wellness-satisfaction-B < -0.75]
+  let WB6 count humats with [wellness-satisfaction-B >= -0.75 and wellness-satisfaction-B < -0.70]
+  let WB7 count humats with [wellness-satisfaction-B >= -0.70 and wellness-satisfaction-B < -0.65]
+  let WB8 count humats with [wellness-satisfaction-B >= -0.65 and wellness-satisfaction-B < -0.60]
+  let WB9 count humats with [wellness-satisfaction-B >= -0.60 and wellness-satisfaction-B < -0.55]
+  let WB10 count humats with [wellness-satisfaction-B >= -0.55 and wellness-satisfaction-B < -0.50]
+  let WB11 count humats with [wellness-satisfaction-B >= -0.50 and wellness-satisfaction-B < -0.45]
+  let WB12 count humats with [wellness-satisfaction-B >= -0.45 and wellness-satisfaction-B < -0.40]
+  let WB13 count humats with [wellness-satisfaction-B >= -0.40 and wellness-satisfaction-B < -0.35]
+  let WB14 count humats with [wellness-satisfaction-B >= -0.35 and wellness-satisfaction-B < -0.30]
+  let WB15 count humats with [wellness-satisfaction-B >= -0.30 and wellness-satisfaction-B < -0.25]
+  let WB16 count humats with [wellness-satisfaction-B >= -0.25 and wellness-satisfaction-B < -0.20]
+  let WB17 count humats with [wellness-satisfaction-B >= -0.20 and wellness-satisfaction-B < -0.15]
+  let WB18 count humats with [wellness-satisfaction-B >= -0.15 and wellness-satisfaction-B < -0.10]
+  let WB19 count humats with [wellness-satisfaction-B >= -0.10 and wellness-satisfaction-B < -0.05]
+  let WB20 count humats with [wellness-satisfaction-B >= -0.05 and wellness-satisfaction-B < 0.00]
+  
+  let WB21 count humats with [wellness-satisfaction-B <= 1.00 and wellness-satisfaction-B > 0.95]
+  let WB22 count humats with [wellness-satisfaction-B <= 0.95 and wellness-satisfaction-B > 0.90]
+  let WB23 count humats with [wellness-satisfaction-B <= 0.90 and wellness-satisfaction-B > 0.85]
+  let WB24 count humats with [wellness-satisfaction-B <= 0.85 and wellness-satisfaction-B > 0.80]
+  let WB25 count humats with [wellness-satisfaction-B <= 0.80 and wellness-satisfaction-B > 0.75]
+  let WB26 count humats with [wellness-satisfaction-B <= 0.75 and wellness-satisfaction-B > 0.70]
+  let WB27 count humats with [wellness-satisfaction-B <= 0.70 and wellness-satisfaction-B > 0.65]
+  let WB28 count humats with [wellness-satisfaction-B <= 0.65 and wellness-satisfaction-B > 0.60]
+  let WB29 count humats with [wellness-satisfaction-B <= 0.60 and wellness-satisfaction-B > 0.55]
+  let WB30 count humats with [wellness-satisfaction-B <= 0.55 and wellness-satisfaction-B > 0.50]
+  let WB31 count humats with [wellness-satisfaction-B <= 0.50 and wellness-satisfaction-B > 0.45]
+  let WB32 count humats with [wellness-satisfaction-B <= 0.45 and wellness-satisfaction-B > 0.40]
+  let WB33 count humats with [wellness-satisfaction-B <= 0.40 and wellness-satisfaction-B > 0.35]
+  let WB34 count humats with [wellness-satisfaction-B <= 0.35 and wellness-satisfaction-B > 0.30]
+  let WB35 count humats with [wellness-satisfaction-B <= 0.30 and wellness-satisfaction-B > 0.25]
+  let WB36 count humats with [wellness-satisfaction-B <= 0.25 and wellness-satisfaction-B > 0.20]
+  let WB37 count humats with [wellness-satisfaction-B <= 0.20 and wellness-satisfaction-B > 0.15]
+  let WB38 count humats with [wellness-satisfaction-B <= 0.15 and wellness-satisfaction-B > 0.10]
+  let WB39 count humats with [wellness-satisfaction-B <= 0.10 and wellness-satisfaction-B > 0.05]
+  let WB40 count humats with [wellness-satisfaction-B <= 0.05 and wellness-satisfaction-B > 0.00]
+  
+  ;wellness importance
+  let WI1 count humats with [wellness-importance >= -1.00 and wellness-importance < -0.95]
+  let WI2 count humats with [wellness-importance >= -0.95 and wellness-importance < -0.90]
+  let WI3 count humats with [wellness-importance >= -0.90 and wellness-importance < -0.85]
+  let WI4 count humats with [wellness-importance >= -0.85 and wellness-importance < -0.80]
+  let WI5 count humats with [wellness-importance >= -0.80 and wellness-importance < -0.75]
+  let WI6 count humats with [wellness-importance >= -0.75 and wellness-importance < -0.70]
+  let WI7 count humats with [wellness-importance >= -0.70 and wellness-importance < -0.65]
+  let WI8 count humats with [wellness-importance >= -0.65 and wellness-importance < -0.60]
+  let WI9 count humats with [wellness-importance >= -0.60 and wellness-importance < -0.55]
+  let WI10 count humats with [wellness-importance >= -0.55 and wellness-importance < -0.50]
+  let WI11 count humats with [wellness-importance >= -0.50 and wellness-importance < -0.45]
+  let WI12 count humats with [wellness-importance >= -0.45 and wellness-importance < -0.40]
+  let WI13 count humats with [wellness-importance >= -0.40 and wellness-importance < -0.35]
+  let WI14 count humats with [wellness-importance >= -0.35 and wellness-importance < -0.30]
+  let WI15 count humats with [wellness-importance >= -0.30 and wellness-importance < -0.25]
+  let WI16 count humats with [wellness-importance >= -0.25 and wellness-importance < -0.20]
+  let WI17 count humats with [wellness-importance >= -0.20 and wellness-importance < -0.15]
+  let WI18 count humats with [wellness-importance >= -0.15 and wellness-importance < -0.10]
+  let WI19 count humats with [wellness-importance >= -0.10 and wellness-importance < -0.05]
+  let WI20 count humats with [wellness-importance >= -0.05 and wellness-importance < 0.00]
+  
+  let WI21 count humats with [wellness-importance <= 1.00 and wellness-importance > 0.95]
+  let WI22 count humats with [wellness-importance <= 0.95 and wellness-importance > 0.90]
+  let WI23 count humats with [wellness-importance <= 0.90 and wellness-importance > 0.85]
+  let WI24 count humats with [wellness-importance <= 0.85 and wellness-importance > 0.80]
+  let WI25 count humats with [wellness-importance <= 0.80 and wellness-importance > 0.75]
+  let WI26 count humats with [wellness-importance <= 0.75 and wellness-importance > 0.70]
+  let WI27 count humats with [wellness-importance <= 0.70 and wellness-importance > 0.65]
+  let WI28 count humats with [wellness-importance <= 0.65 and wellness-importance > 0.60]
+  let WI29 count humats with [wellness-importance <= 0.60 and wellness-importance > 0.55]
+  let WI30 count humats with [wellness-importance <= 0.55 and wellness-importance > 0.50]
+  let WI31 count humats with [wellness-importance <= 0.50 and wellness-importance > 0.45]
+  let WI32 count humats with [wellness-importance <= 0.45 and wellness-importance > 0.40]
+  let WI33 count humats with [wellness-importance <= 0.40 and wellness-importance > 0.35]
+  let WI34 count humats with [wellness-importance <= 0.35 and wellness-importance > 0.30]
+  let WI35 count humats with [wellness-importance <= 0.30 and wellness-importance > 0.25]
+  let WI36 count humats with [wellness-importance <= 0.25 and wellness-importance > 0.20]
+  let WI37 count humats with [wellness-importance <= 0.20 and wellness-importance > 0.15]
+  let WI38 count humats with [wellness-importance <= 0.15 and wellness-importance > 0.10]
+  let WI39 count humats with [wellness-importance <= 0.10 and wellness-importance > 0.05]
+  let WI40 count humats with [wellness-importance <= 0.05 and wellness-importance > 0.00]
+end

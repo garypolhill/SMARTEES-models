@@ -1,0 +1,700 @@
+extensions [ csv ]
+
+
+;<summary>
+;create the population of the model using information from the database
+;</summary>
+to Make-Sections-Population
+    ;set mod-curve 0.2
+    ;set mod-pos-curve 0 
+  
+  set mod-curve 0.24 
+  set mod-pos-curve -0.16
+  file-open "/BasesDeDatos/BDVitoriaNetlogo.csv"
+  ;ignore first row
+  let row (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    set row (csv:from-row file-read-line ";")
+    Make-Real-Population row
+  ]
+  file-close
+  ;ask humats [hide-turtle]
+  file-open population-csv
+  ;ignore first row
+  set row (csv:from-row file-read-line ",")
+  while [ not file-at-end? ] [
+    set row (csv:from-row file-read-line ",")
+    Make-Simulated-Population row
+  ]
+  file-close
+  
+end
+
+
+to Make-Real-Population [citizen-data]
+  ; Set  importances
+  create-humats 1 [
+    set wellness-importance ((item 5 citizen-data) + (item 7 citizen-data) +  (item 10 citizen-data) +  (item 15 citizen-data)) / 4
+    set wellness-importance Normalized-Min-Max  wellness-importance 0 6 0 1
+    
+    set environmental-quality-importance ((item 6 citizen-data) + (item 8 citizen-data) +  (item 12 citizen-data) +  (item 16 citizen-data) + (item 17 citizen-data)) / 5
+    set environmental-quality-importance Normalized-Min-Max environmental-quality-importance 0 6 0 1
+    
+    set comfort-importance ((item 9 citizen-data) + (item 11 citizen-data) +  (item 13 citizen-data) +  (item 14 citizen-data)) / 4
+    set comfort-importance Normalized-Min-Max  comfort-importance 0 6 0 1
+    
+    set prestige-importance (item 18 citizen-data)
+    set prestige-importance Normalized-Min-Max  prestige-importance 0 6 0 1
+    
+    set participation-importance ((item 19 citizen-data) + (item 20 citizen-data) +  (item 21 citizen-data)) / 3
+    set participation-importance  Normalized-Min-Max  participation-importance  0 6 0 1
+    
+    set social-importance random-float 1
+    
+    ; Set initial satisfactions for all BA ; excluding social dimension
+    ;set wellness-satisfaction-A Normalized-Min-Max Random-Beta 4 4 0 1 -1 1
+    set wellness-satisfaction-A ((item 23 citizen-data) + (item 26 citizen-data) +  (item 29 citizen-data) +  (item 32 citizen-data) + (item 33 citizen-data) +  (item 34 citizen-data)) / 6
+    set wellness-satisfaction-A   Normalized-Min-Max  wellness-satisfaction-A   0 6 -1 1
+    set wellness-satisfaction-A wellness-satisfaction-A + mod-pos-curve
+    if wellness-satisfaction-A > 1 [ set wellness-satisfaction-A  1]
+    if wellness-satisfaction-A < -1 [ set wellness-satisfaction-A  -1]
+    
+    set environmental-quality-satisfaction-A ((item 22 citizen-data) + (item 25 citizen-data) +  (item 30 citizen-data) +  (item 31 citizen-data)) / 4
+    set environmental-quality-satisfaction-A  Normalized-Min-Max  environmental-quality-satisfaction-A  0 6 -1 1
+    set environmental-quality-satisfaction-A  environmental-quality-satisfaction-A  + mod-pos-curve
+    if environmental-quality-satisfaction-A > 1 [ set environmental-quality-satisfaction-A  1]
+    if environmental-quality-satisfaction-A < -1 [ set environmental-quality-satisfaction-A  -1]
+    
+    set comfort-satisfaction-A ((item 24 citizen-data) + (item 28 citizen-data)) / 2
+    set comfort-satisfaction-A  Normalized-Min-Max  comfort-satisfaction-A 0 6 -1 1
+    set comfort-satisfaction-A  comfort-satisfaction-A  + mod-pos-curve
+    if comfort-satisfaction-A > 1 [ set comfort-satisfaction-A  1]
+    if comfort-satisfaction-A < -1 [ set comfort-satisfaction-A  -1]
+    
+    set prestige-satisfaction-A (item 27 citizen-data)
+    set prestige-satisfaction-A  Normalized-Min-Max  prestige-satisfaction-A  0 6 -1 1
+    set prestige-satisfaction-A   prestige-satisfaction-A   + mod-pos-curve
+    if prestige-satisfaction-A  > 1 [ set prestige-satisfaction-A   1]
+    if prestige-satisfaction-A  < -1 [ set prestige-satisfaction-A   -1]
+    
+    set participation-satisfaction-A ((item 35 citizen-data) + (item 36 citizen-data)) / 2
+    set participation-satisfaction-A  Normalized-Min-Max  participation-satisfaction-A  0 6 -1 1
+    set participation-satisfaction-A   participation-satisfaction-A   + mod-pos-curve
+    if participation-satisfaction-A > 1 [ set participation-satisfaction-A  1]
+    if participation-satisfaction-A < -1 [ set participation-satisfaction-A  -1]
+    
+    set wellness-satisfaction-B (0 - wellness-satisfaction-A) +  mod-curve
+    if wellness-satisfaction-B > 1 [ set wellness-satisfaction-B  1]
+    if wellness-satisfaction-B < -1 [ set wellness-satisfaction-B  -1]
+    set environmental-quality-satisfaction-B (0 - environmental-quality-satisfaction-A) + mod-curve
+    if environmental-quality-satisfaction-B > 1 [ set environmental-quality-satisfaction-B  1]
+    if environmental-quality-satisfaction-B < -1 [ set environmental-quality-satisfaction-B  -1]
+    set comfort-satisfaction-B (0 - comfort-satisfaction-A + mod-curve)
+    if comfort-satisfaction-B > 1 [ set comfort-satisfaction-B  1]
+    if comfort-satisfaction-B < -1 [ set comfort-satisfaction-B  -1]
+    set prestige-satisfaction-B (0 - prestige-satisfaction-A ) + mod-curve
+    if prestige-satisfaction-B  > 1 [ set prestige-satisfaction-B   1]
+    if prestige-satisfaction-B  < -1 [ set prestige-satisfaction-B   -1]
+    set participation-satisfaction-B (0 - participation-satisfaction-A) + mod-curve
+    if participation-satisfaction-B > 1 [ set participation-satisfaction-B  1]
+    if participation-satisfaction-B < -1 [ set participation-satisfaction-B  -1]
+    
+    ;set influence parameters
+    set friends-trust Normalized-Min-Max  (item 41 citizen-data) 0 6 0 1
+    set adjacents-trust Normalized-Min-Max  (item 40 citizen-data) 0 6 0 1
+    set city-council-trust Normalized-Min-Max  (item 42 citizen-data) 0 6 0 1
+    set local-media-trust Normalized-Min-Max  (item 45 citizen-data) 0 6 0 1
+    set original-local-media-trust local-media-trust
+    set merchants-associations-trust Normalized-Min-Max  (item 44 citizen-data) 0 6 0 1
+    set original-merchants-associations-trust merchants-associations-trust
+    set other-associations-trust Normalized-Min-Max  (item 43 citizen-data) 0 6 0 1
+    set original-other-associations-trust other-associations-trust
+    
+    ;Set evaluations for all BAs
+    set wellness-evaluation-A wellness-importance * wellness-satisfaction-A
+    set environmental-quality-evaluation-A environmental-quality-importance * environmental-quality-satisfaction-A
+    set comfort-evaluation-A comfort-importance * comfort-satisfaction-A
+    set prestige-evaluation-A prestige-importance * prestige-satisfaction-A
+    set participation-evaluation-A participation-importance * participation-satisfaction-A
+    
+    set wellness-evaluation-B wellness-importance * wellness-satisfaction-B
+    set environmental-quality-evaluation-B environmental-quality-importance * environmental-quality-satisfaction-B
+    set comfort-evaluation-B comfort-importance * comfort-satisfaction-B
+    set prestige-evaluation-B prestige-importance * prestige-satisfaction-B
+    set participation-evaluation-B participation-importance * participation-satisfaction-B
+    
+    ;global satisfaction for all behavioural alternatives
+    set satisfaction-A ((wellness-evaluation-A + environmental-quality-evaluation-A + comfort-evaluation-A + prestige-evaluation-A + participation-evaluation-A) / 5)
+    set satisfaction-B ((wellness-evaluation-B + environmental-quality-evaluation-B + comfort-evaluation-B + prestige-evaluation-B + participation-evaluation-B) / 5)
+    
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+    
+    ;social network values
+    set age (item 2 citizen-data)
+    ifelse (item 1 citizen-data) = 1 [set gender "male"] [set gender "female"]
+    set education-level (item 37 citizen-data)
+    set economic-activity (item 3 citizen-data)
+    set simulated  0
+    set years-neighborhood (item 38 citizen-data)
+    set childs (item 39 citizen-data)
+    set numFriends (item 46 citizen-data)
+    ifelse (item 0 citizen-data) = 1  [
+      ;judimendi
+      set section one-of [ "0105904007" "0105904008" "0105904009" "0105904010" "0105904011" "0105904012" "0105904013" ]
+    ][
+      ifelse (item 0 citizen-data) = 2 [
+        ;lovaina
+        set section one-of ["0105902001" "0105902002" "0105902003" "0105902004" "0105902005" "0105902006" "0105902007"  ] 
+      ] [
+        ;rest of the city
+        set section one-of ["0105901001" "0105901002" "0105901003" "0105901004" "0105901005" "0105901007" "0105901008" "0105901009" "0105901010" "0105901011" "0105901012" "0105901013" "0105901014" "0105901015" "0105901016" "0105901017" "0105901018" "0105901019" "0105901020" "0105901021" "0105901022" "0105901023" "0105901024" "0105901025" "0105901026" "0105901027" "0105901028" "0105901029" "0105901030" "0105901031" "0105901032" "0105901033" "0105901034" "0105901035" "0105901036" "0105901037" "0105901038" "0105901039" "0105902008" "0105902009" "0105902010" "0105902011" "0105902012" "0105902013" "0105902014" "0105902015" "0105902016" "0105902017" "0105902018" "0105902019" "0105902020" "0105902021" "0105902022" "0105902023" "0105902024" "0105902025" "0105902026" "0105902027" "0105902028" "0105902029" "0105902030" "0105902031" "0105902032" "0105902033" "0105902034" "0105902035" "0105902036" "0105902037" "0105902038" "0105902039" "0105902040" "0105902041" "0105902042" "0105902043" "0105902044""0105903001" "0105903002" "0105903003" "0105903004" "0105903005" "0105903006" "0105903007" "0105903008" "0105903009" "0105903010" "0105903011" "0105903012" "0105903013" "0105903014" "0105903015" "0105903016" "0105903017" "0105903018" "0105903019" "0105903020" "0105903021" "0105903022" "0105903023" "0105903024" "0105903025" "0105903026" "0105903027" "0105903028" "0105903029" "0105903030" "0105903031" "0105903032" "0105903033" "0105903034" "0105903035" "0105903036" "0105903037" "0105903039" "0105903038" "0105903040" "0105904001" "0105904002" "0105904003" "0105904004" "0105904005" "0105904006" "0105904014" "0105904015" "0105904016" "0105904017" "0105904018" "0105904019" "0105904020" "0105904021" "0105904022" "0105904023" "0105904024" "0105904025" "0105904026" "0105904027" "0105904028" "0105904029" "0105904030" "0105904031" "0105905001" "0105905002" "0105905003" "0105905004" "0105905005" "0105905006" "0105905007" "0105905008" "0105905009" "0105905010" "0105905011" "0105905012" "0105905013" "0105905014" "0105905015" "0105905016" "0105905017" "0105905018" "0105905019" "0105905020" "0105905021" "0105905022" "0105905023" "0105905024" "0105905025" "0105905026" "0105905027" "0105905028" "0105905029" "0105905030" "0105905031" "0105905032" "0105905033" "0105905034" "0105905035" ]  
+      ]
+    ]
+  ] 
+end
+
+to Make-Simulated-Population [sectionDem]
+  let cusec  remove-item 0 (item 0 sectionDem)
+  let max-citizen-section  (item 1 sectionDem)
+  let humats-section humats with [section = cusec]
+  set max-citizen-section  max-citizen-section - count(humats-section)
+  
+  ;create male over  65
+  let male-over-65 (item 8 sectionDem) / 5
+  
+  create-humats male-over-65 [
+    set gender  "male"
+    set age  random 36 + 65
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;
+    set education-level "low"
+    
+    ;reference humat
+    let copy  nobody
+    ifelse (education-level = "medium") or (education-level = "high") [
+      set copy  one-of humats with [(simulated = 0) and (age >= 65) and ((education-level = "medium") or (education-level = "high"))]
+    ][
+      set copy  one-of humats with [(simulated = 0) and (age >= 65) and (education-level = "low")]
+    ]
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+    ;
+    ; 0 employed ,  0  umemployed, 1 inactive, 0  student 
+    Economic-Activity-Distribution 0 0 1
+  ]
+  
+  ;create female over  65
+  let female-over-65 (item 9 sectionDem) / 5
+  create-humats female-over-65 [
+    set gender  "female"
+    set age  random 36 + 65
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;porcentaje
+    Education-Level-Distribution 0.57 0.21 
+    
+    ;reference humat
+    let copy  nobody
+    ifelse (education-level = "medium") or (education-level = "high") [
+      set copy  one-of humats with [(simulated = 0) and (age >= 65) and ((education-level = "medium") or (education-level = "high"))]
+    ][
+      set copy  one-of humats with [(simulated = 0) and (age >= 65) and (education-level = "low")]
+    ]
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+    ; 0.03  employed ,  0.03  umemployed, 0.94 inactive, 0  student 
+    Economic-Activity-Distribution 0.03 0.03 0.94
+  ]
+  
+  ;create male under  25
+  let male-under-25 (item 2 sectionDem) / 5
+  create-humats male-under-25 [
+    set gender  "male"
+    set age  random 9 + 16
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    Education-Level-Distribution 0.15 0.54
+    ;0.17 employed ,  0,25 umemployed, 0 inactive,  0,57 student 
+    Economic-Activity-Distribution 0.17 0.25 0
+    set years-neighborhood Time-In-Neighborhood 0.48 0.71
+    set childs Children 0.04
+    ;reference humat
+    let copy Population-Group years-neighborhood section gender economic-activity education-level
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 
+  ]
+  
+  ;create female under  25
+  let female-under-25 (item 3 sectionDem) / 5
+  create-humats female-under-25 [
+    set gender  "female"
+    set age  random 9 + 16
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;porcentaje
+    Education-Level-Distribution 0.07 0.51
+    ; 0.28 employed ,   0,23 umemployed,  0 inactive,   , 0.48 student 
+    Economic-Activity-Distribution 0.28 0.23 0
+    set years-neighborhood Time-In-Neighborhood 0.33 0.53
+    set childs Children 0.66
+    ;reference humat
+    let copy Population-Group years-neighborhood section gender economic-activity education-level
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 
+  ]
+  
+  ;create male between 25-44
+  let male-bt-25-44 (item 4 sectionDem) / 5
+  create-humats male-under-25 [
+    set gender  "male"
+    set age  random 20 + 25
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;porcentaje
+    Education-Level-Distribution 0.16 0.41
+    ; 0.74 employed ,   0.22 umemployed,  0.007 inactive, 0.02 student 
+    Economic-Activity-Distribution 0.74 0.22 0.007
+    set years-neighborhood Time-In-Neighborhood 0.28 0.65
+    set childs Children 0.44
+    ;reference humat
+    let copy Population-Group years-neighborhood section gender economic-activity education-level
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 
+  ]
+  
+  ;create female  between 25-44
+  let female-bt-25-44 (item 5 sectionDem) / 5
+  create-humats female-bt-25-44  [
+    set gender  "female"
+    set age  random 20 + 25
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;porcentaje
+    Education-Level-Distribution 0.14 0.29
+    ; 0.69 employed ,   0.29 umemployed,   0 inactive,  0,01 student 
+    Economic-Activity-Distribution 0.69 0.29 0
+    set years-neighborhood Time-In-Neighborhood 0.32 0.66
+    set childs Children 0.59
+    ;reference humat
+    let copy Population-Group years-neighborhood section gender economic-activity education-level
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 
+  ]
+  
+  ;create male between 45-64
+  let male-bt-45-64 (item 6 sectionDem) / 5
+  create-humats male-bt-45-64 [
+    set gender  "male"
+    set age  random 20 + 44
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;porcentaje
+    Education-Level-Distribution 0.2 0.5
+    ; 0,68 employed ,   0.16 umemployed,   0.16 inactive,   0 student 
+    Economic-Activity-Distribution 0.68 0.16 0.16
+    set years-neighborhood Time-In-Neighborhood 0.68 0.9
+    set childs Children 0.5
+    ;reference humat
+    let copy Population-Group years-neighborhood section gender economic-activity education-level
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 
+  ]
+  
+  ;create female  between 45-64
+  let female-bt-45-64 (item 7 sectionDem) / 5
+  create-humats female-bt-45-64  [
+    set gender  "female"
+    set age  random 20 + 44
+    set simulated 1
+    set section  remove-item 0 (item 0 sectionDem)
+    ;porcentaje
+    Education-Level-Distribution 0.17 0.4
+    ; 0.59 employed , 0.3   umemployed,  0.11  inactive,  0  student
+    Economic-Activity-Distribution 0.59 0.3 0.11
+    set years-neighborhood Time-In-Neighborhood 0.73 0.9
+    set childs Children 0.49
+    ;reference humat
+    let copy Population-Group years-neighborhood section gender economic-activity education-level
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 
+  ]
+ 
+end
+
+to Make-Critical-Node [name node-scope loc trust-type-string]
+  create-critical-nodes 1[
+    set node-type name
+    set scope round(node-scope / 100 * (count humats))
+    set location remove-item 0 loc
+    set trust-type trust-type-string
+  ]
+end
+;<summary>
+;create the critical nodes
+;</summary>
+to Make-Critical-Nodes
+  ;read the critical node csv and make the critical node turtles
+  file-open critical-nodes-config
+  ;ignore first row
+  let row (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    set row (csv:from-row file-read-line ";")
+    Make-Critical-Node item 0 row item 1 row (word item 2 row) item 3 row
+    ]
+  file-close
+  
+  ;set, place, color, shape and size of critical nodes
+  ask critical-nodes[
+    set shape "building institution"
+    let loc-patches patches with [ district-id = [location] of myself]
+    move-to one-of loc-patches
+    set size 2
+    set color white
+  ]
+end
+
+;<summary>
+;Place the citizen in a patch of his section, prioritizing the empty patches
+;</summary>
+to Place-Citizen
+  ask humats [
+    let empty-patches patches with [ not any? turtles-here and district-id = [section] of myself]
+    if not any? empty-patches [
+      set empty-patches patches with [ district-id = [section] of myself]
+    ]
+    move-to one-of empty-patches
+  ]
+end
+
+;<summary>
+;create the strategy-manager
+;</summary>
+to Make-Strategy-Manager
+  create-strategy-managers 1
+  ask strategy-managers[
+    hide-turtle
+    set strategies-list [] 
+    ifelse scenario-1 [
+      ;real timeline strategies
+      file-open "scenario1.csv"
+    ][
+        ;real timeline strategies
+        file-open strategies-table
+    ]   
+    
+    ;ignore first row
+    let row (csv:from-row file-read-line ";")
+    while [ not file-at-end? ] [
+      set row (csv:from-row file-read-line ";")
+      ;map a strategy file row to a more simple representation
+      let focus-list Split item 9 row
+      set strategies-list Make-Strategy-List row focus-list
+    ]
+    file-close
+    show strategies-list
+  ]
+end
+
+;<summary>
+;Map a strategy row in a mensual strategy format
+;row, is the row of the strategy file, which contains the parameters of a critical node strategy
+;</summary>
+to-report Make-Strategy-List[row focus-list]
+  let starting-year item 3 row
+  let ending-year item 5 row
+  let months 0
+  let years 0
+
+  ifelse starting-year  > ending-year[
+    print("The strategy table is wrong: ending year must be equal to or greater than starting year")
+  ][
+    ;years that the strategy lasts
+    set years ending-year - starting-year
+  ]
+  let ending-month item 4 row + (years * 12) ;ending month is ending-month + years in months
+  ;strategy duration in months
+  let duration ending-month - item 2 row ;ending-month - starting-month
+  
+  ;current-mont starts in the starting-month
+  let current-month item 2 row
+  ;new strategy row
+  let newrow []
+  ;make a new strategy row for every month of the original strategy
+  while [current-month <= ending-month][
+    let new-starting-year starting-year + floor (current-month / 12)
+    let new-starting-month (current-month mod 12)
+    ;fix problem with the 12 mod 12 situation
+    if new-starting-month = 0 [
+      ;if new-stating-month = 0 in fact is the 12º month
+      set new-starting-month 12
+      ;and there is not new year yet!
+      set new-starting-year new-starting-year - 1
+    ]
+    ;make the new row with the original values and the new stating month/year
+    set newrow (list (item 0 row) (item 1 row) (new-starting-month) (new-starting-year) (item 6 row)  (item 7 row) (item 8 row) focus-list)
+    ;add the new row to the list  critical-node-name behavior starting-month starting-year frecuency reach secondary-critical-node-name focus
+    set strategies-list lput newrow strategies-list
+    ;increment loop
+    set current-month current-month + 1
+  ]
+  report strategies-list
+end
+
+to-report Population-Group [time section-sim gender-sim economic-activity-sim education-level-sim]
+  ;implementar el arbol
+  let sections-set-superblocks  ["0105902001" "0105902002" "0105902003" "0105902004" "0105902005" "0105902006" "0105902007" "0105904007" "0105904008" "0105904009" "0105904010" "0105904011" "0105904012" "0105904013"]
+  ;right branch (node time in neighborhood)
+  ifelse time >= 3  [
+    ;right branch (node live in neighborhood)
+    ifelse  member? section-sim  sections-set-superblocks  [
+      ;right branch (node childs)
+      ifelse (childs = 1) [
+        report one-of humats with [(simulated = 0) and (age < 65) and (member? section  sections-set-superblocks) and (years-neighborhood >= 3) and (childs = 1)]
+      ][
+        ;left branch (node childs)
+        ;right branch (node gender)
+        ifelse gender-sim = "female" [
+          report one-of humats with [(simulated = 0) and (age < 65) and (member? section  sections-set-superblocks) and (years-neighborhood >= 3) and (childs = 0) and (gender = "female")]
+        ][
+          ;left branch (node gender)
+          report one-of humats with [(simulated = 0) and (age < 65) and (member?  section sections-set-superblocks) and (years-neighborhood >= 3) and (childs = 0) and (gender = "male")]
+        ]
+      ]
+    ][
+      ;left branch (node live in neighborhood)
+      ;rigth branch (inactive)
+      ifelse economic-activity-sim = "inactive"[
+        report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity = "inactive") ]
+      ][
+        ;left branch (inactive)
+        ;rigth branch (education-level)
+        ifelse education-level-sim = "high" [
+          ;rigth branch (gender)
+          ifelse gender-sim = "female" [
+            ;right branch (age > 45)
+            ifelse age >= 45 [
+              report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity != "inactive") and (education-level = "high")and (gender = "female") and (age >= 45)]
+            ][
+              ;left branch (age < 45)
+              report one-of humats with [(simulated = 0) and (age < 45) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity != "inactive") and (education-level = "high")and (gender = "female")]
+            ]
+          ][
+            ;left branch (gender)
+            ;right branch (node childs)
+            ifelse (childs = 1) [
+              report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity != "inactive") and (education-level = "high")and (gender = "male") and (childs = 1)]
+            ][
+              ;left branch (node childs) 
+              report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity != "inactive") and (education-level = "high") and (gender = "male") and (childs = 0)]
+            ]
+          ]
+        ][
+          ;left branch (education-level)
+          ;rigth branch (unemployed)
+          ifelse economic-activity-sim = "unemployed"[
+            report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity != "inactive") and (education-level != "high") and (economic-activity = "unemployed")]
+          ][
+            ;left branch (unemployed)
+            report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood >= 3)  and (not member? section  sections-set-superblocks) and (economic-activity != "inactive") and (education-level != "high") and (economic-activity != "unemployed")]
+          ]
+        ]
+      ]
+    ]
+  ][
+    ;left branch (time)
+    ;rigth branch (education-level)
+    ifelse education-level-sim != "low"[
+      ;rigth branch (time)
+      ifelse time >= 2 [
+        ;rigth branch (age)
+        ifelse age >= 25 [
+          ;rigth branch (node live in neighborhood)
+          ifelse member? section-sim  sections-set-superblocks[
+            report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood = 2) and (education-level != "low") and (age >= 25) and (member? section  sections-set-superblocks)]
+          ][
+            ;left branch (node live in neighborhood)
+            report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood = 2) and (education-level != "low") and (age >= 25) and (not member? section  sections-set-superblocks)]
+          ]
+        ][
+          ;left branch (age)
+          report one-of humats with [(simulated = 0) and (age <= 25) and (years-neighborhood = 2) and (education-level != "low")]
+        ]
+      ][
+        ;left branch (node live in neighborhood)
+        report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood < 2) and (education-level != "low")]
+      ]
+    ][
+      ;left branch (education-level)
+      report one-of humats with [(simulated = 0) and (age < 65) and (years-neighborhood < 3) and (education-level = "low")]
+    ]
+  ]
+end
+
+to Copy-Needs [copy]
+  ;importances
+  set wellness-importance [wellness-importance] of copy
+  set environmental-quality-importance [environmental-quality-importance] of copy
+  set comfort-importance [comfort-importance ] of copy
+  set prestige-importance [prestige-importance] of copy
+  set participation-importance [participation-importance] of copy
+  set social-importance [social-importance] of copy
+  
+  ;satisfactions
+  set wellness-satisfaction-A [wellness-satisfaction-A] of copy
+  set environmental-quality-satisfaction-A [environmental-quality-satisfaction-A] of copy
+  set comfort-satisfaction-A [comfort-satisfaction-A] of copy
+  set prestige-satisfaction-A  [prestige-satisfaction-A ] of copy
+  set participation-satisfaction-A [participation-satisfaction-A] of copy
+  
+  set wellness-satisfaction-B [wellness-satisfaction-B] of copy
+  set environmental-quality-satisfaction-B [environmental-quality-satisfaction-B] of copy
+  set comfort-satisfaction-B [comfort-satisfaction-B] of copy
+  set prestige-satisfaction-B  [prestige-satisfaction-B ] of copy
+  set participation-satisfaction-B [participation-satisfaction-B] of copy
+  
+  ;influence parameters
+  set friends-trust [friends-trust] of copy
+  set adjacents-trust [adjacents-trust] of copy
+  set city-council-trust [city-council-trust] of copy
+  set local-media-trust [local-media-trust] of copy
+  set merchants-associations-trust [merchants-associations-trust] of copy
+  set other-associations-trust [other-associations-trust] of copy
+  set original-local-media-trust local-media-trust
+  set original-merchants-associations-trust merchants-associations-trust
+  set original-other-associations-trust other-associations-trust
+  
+  ;evaluations
+  set wellness-evaluation-A [wellness-evaluation-A] of copy
+  set environmental-quality-evaluation-A [environmental-quality-evaluation-A] of copy
+  set comfort-evaluation-A [comfort-evaluation-A ] of copy
+  set prestige-evaluation-A [prestige-evaluation-A] of copy
+  set participation-evaluation-A [participation-evaluation-A] of copy
+  
+  set wellness-evaluation-B [wellness-evaluation-B] of copy
+  set environmental-quality-evaluation-B [environmental-quality-evaluation-B] of copy
+  set comfort-evaluation-B [comfort-evaluation-B ] of copy
+  set prestige-evaluation-B [prestige-evaluation-B] of copy
+  set participation-evaluation-B [participation-evaluation-B] of copy
+  
+  set satisfaction-A [satisfaction-A] of copy
+  set satisfaction-B [satisfaction-B] of copy
+  
+  set numFriends [numFriends] of copy
+
+end
+
+to Economic-Activity-Distribution [prob-employed prob-umemployed prob-inactive]
+  ;economic activity based on demographic distribution
+  let rnumber  random-float 1
+  ifelse rnumber <=  prob-employed[
+    set economic-activity  "employed"
+  ][
+    ifelse rnumber <= (prob-employed + prob-umemployed) [
+      set economic-activity  "unemployed"
+    ][
+      ifelse rnumber <= (prob-employed + prob-umemployed + prob-inactive )[
+        set economic-activity  "inactive"
+      ]
+      [
+        set economic-activity  "student"
+      ]
+    ]
+  ] 
+end
+
+to Education-Level-Distribution [low-prob medium-prob ]
+  ;education level based on demographic distribution
+    let rnumber  random-float 1
+    ifelse rnumber <=  low-prob[
+      set education-level  "low"
+    ][
+      ifelse rnumber <= (low-prob + medium-prob)[
+        set education-level  "medium"
+      ][
+        set education-level  "high"
+      ]
+    ]
+end
+to-report Time-in-Neighborhood [prob-ten prob-three]
+  let rnumber  random-float 1
+  ifelse rnumber <=  prob-ten [
+    report 3
+  ][
+    ifelse rnumber <=  prob-three[
+      report 2
+    ][
+      report 1
+    ]
+  ]
+end
+to-report Children [prob]
+  let rnumber  random-float 1
+  ifelse rnumber <=  prob [
+    report 1
+  ][
+    report 0
+  ]
+end

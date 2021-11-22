@@ -1,0 +1,125 @@
+
+;<summary>
+;The critical node tries to influence a humat in his network.
+;This influence depends on the trust of the humat in that critical node.
+;</summary>
+to Critical-Node-Signaling [target-humat node opinion focus-list]
+  ask target-humat [    
+    ;critical node "satisfaction"
+    let A-satisfaction  0
+    let B-satisfaction  0
+    
+    ifelse opinion = "supporter" [
+      set A-satisfaction  1
+      set B-satisfaction  -1
+    ][
+      set A-satisfaction  -1
+      set B-satisfaction  1
+    ]
+
+    ;select trust of the primary node  
+    let trust-type-value [trust-type] of one-of critical-nodes with [node-type = node]
+    let current-trust 0
+    ifelse trust-type-value = "council"[
+      set current-trust city-council-trust
+    ][
+      ifelse trust-type-value = "merchant"[
+        set current-trust merchants-associations-trust
+      ][
+        ifelse trust-type-value = "associations" [
+          set current-trust other-associations-trust
+        ][
+          ifelse trust-type-value = "media" [
+            set current-trust local-media-trust
+          ][
+            show("ERROR TRUST-TYPE-VALUE")
+            show(trust-type-value)
+          ]
+        ]
+      ]
+    ]
+    let signaling-persuasion current-trust * 0.2 ;0.2
+    ; seting new experiential and values satisfaction
+    ;signaling-humat satisfaction, trust in critical node, critical node satisfaction  
+    
+    foreach focus-list [ focus ->
+      if  member? focus ["wellness" "all"][
+        set wellness-satisfaction-A New-Need-Satisfaction wellness-satisfaction-A signaling-persuasion A-satisfaction
+        set wellness-satisfaction-B New-Need-Satisfaction wellness-satisfaction-B signaling-persuasion B-satisfaction
+        if  member? focus ["wellness"][show("wellness")]
+      ]
+      if  member? focus ["environmental-quality" "all"][
+        set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A signaling-persuasion A-satisfaction
+        set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B signaling-persuasion B-satisfaction
+      ]
+      if  member? focus ["comfort" "all"][
+        set comfort-satisfaction-A New-Need-Satisfaction comfort-satisfaction-A signaling-persuasion A-satisfaction
+        set comfort-satisfaction-B New-Need-Satisfaction comfort-satisfaction-B signaling-persuasion B-satisfaction
+      ]
+      if  member? focus ["prestige" "all"][
+        set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A signaling-persuasion A-satisfaction
+        set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B signaling-persuasion B-satisfaction
+      ]
+      if  member? focus ["participation" "all"][
+        set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A signaling-persuasion A-satisfaction
+        set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B signaling-persuasion B-satisfaction
+        
+      ]
+    ]
+    ;update behaviour decision
+    Update-Evaluations
+    Update-Dissonances
+    Choose-Behaviour
+    Update-Evaluations
+    Update-Dissonances
+  ] 
+end
+
+
+;timeline
+
+to Critical-Nodes-Strategy 
+  ask strategy-managers[
+    ;check if any trigger has been fired
+    let i 0
+    foreach strategies-list[
+      strategy -> if (item 2 strategy) = month [
+        if item 3 strategy = year [
+          ;critical-node-name behavior starting-month starting-year frecuency reach secondary-critical-node-name focus
+          Run-Strategy item 0 strategy item 1 strategy item 5 strategy  item 6 strategy item 7 strategy
+          output-print (word ("Organizer:") (item 0 strategy) (" ") ("Date:") (item 2 strategy) "/" (item 3 strategy) (" ") ("Role:" ) (item 7 strategy) )
+          output-print ("----------------------------------------------------------------------------------------------------------------------------------")
+          if item 4 strategy = 1[
+            set strategies-list remove-item i strategies-list 
+            set i (i - 1)
+          ]
+        ]
+        
+      ]
+      set i (i + 1)
+    ]
+  ]
+end
+
+to Run-Strategy[node opinion reach secondary-node-name focus]
+  ;select the critical node performing the communication
+  let current-critical-node one-of critical-nodes with [node-type = secondary-node-name]
+  if current-critical-node = nobody [show (secondary-node-name)]
+  ask current-critical-node[
+    let target-humats sort n-of round(reach * scope) my-out-links
+    foreach target-humats [ target-humat -> critical-node-signaling [other-end] of target-humat node opinion focus]
+  ]
+end
+
+;to Update-Government-Network [reach]
+  ;ask my-out-links [
+    ;die
+  ;]
+  ;create-government-links-to n-of reach humats[
+    ;set color green
+  ;]
+  ;ask my-out-links [
+    ;set weight [government-trust] of other-end
+    ;set label weight
+  ;]
+;end

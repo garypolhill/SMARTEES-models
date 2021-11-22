@@ -1,0 +1,18 @@
+extensions [ gis ]
+;<summary>
+; load the gis data from the shp file, draw the data and write the cusec code to any patch who belongs to a census section
+;</summary>
+to Make-Terrain
+ 
+  let vitoria-dataset gis:load-dataset "/vitoria/vitoria-ciudad/vitoria-ciudad.shp"
+  let judimendi-dataset gis:load-dataset "/vitoria/vitoria-judimendi/judimendi.shp"
+  let lovaina-dataset gis:load-dataset "/vitoria/vitoria-lovaina/lovaina.shp"
+  gis:set-world-envelope gis:envelope-of vitoria-dataset
+  gis:set-drawing-color black
+  foreach gis:feature-list-of vitoria-dataset [? -> gis:draw ? 1.0]
+  gis:set-drawing-color blue
+  ;foreach gis:feature-list-of judimendi-dataset [? -> gis:draw ? 1.0]
+  ;foreach gis:feature-list-of lovaina-dataset [? -> gis:draw ? 1.0]
+  ;the cusec code identify the census section
+  gis:apply-coverage vitoria-dataset "CUSEC" district-id
+end
