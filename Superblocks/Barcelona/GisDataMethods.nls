@@ -1,0 +1,12 @@
+extensions [ gis ]
+;<summary>
+; load the gis data from the shp file, draw the data and write the cusec code to any patch who belongs to a census section
+;</summary>
+to Make-Terrain
+ 
+  let poblenou-dataset gis:load-dataset "/Barcelona/PobleNouSecciones/PobleNou.shp"
+  gis:set-world-envelope gis:envelope-of poblenou-dataset
+  gis:set-drawing-color black
+  foreach gis:feature-list-of poblenou-dataset [? -> gis:draw ? 1.0]
+  gis:apply-coverage poblenou-dataset "CUSEC" district-id
+end

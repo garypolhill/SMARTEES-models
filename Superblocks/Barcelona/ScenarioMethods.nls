@@ -1,0 +1,989 @@
+to Schedule-Meetings
+  Make-Meetings-Manager
+end
+
+;<summary>
+;Map a meeting row in a mensual meeting format
+;row, is the row of the meeting file, which contains the parameters of a meeting
+;</summary>
+to-report Make-Meeting-List [row]
+  let starting-year item 1 row
+  let ending-year item 3 row
+  let months 0
+  let years 0
+  ifelse starting-year  > ending-year[
+    print("The meeting table is wrong: ending year must be equal to or greater than starting year")
+  ][
+    ;years that the strategy lasts
+    set years ending-year - starting-year
+  ]
+  let ending-month item 2 row + (years * 12) ;ending month is ending-month + years in months
+  ;meeting duration in months
+  let duration ending-month - item 0 row ;ending-month - starting-month
+  
+  ;current-mont starts in the starting-month
+  let current-month item 0 row
+  ;new strategy row
+  let newrow []
+  ;make a new strategy row for every month of the original strategy
+  while [current-month <= ending-month][
+    let new-starting-year starting-year + floor (current-month / 12)
+    let new-starting-month (current-month mod 12)
+    ;fix problem with the 12 mod 12 situation
+    if new-starting-month = 0 [
+      ;if new-stating-month = 0 in fact is the 12º month
+      set new-starting-month 12
+      ;and there is not new year yet!
+      set new-starting-year new-starting-year - 1
+    ]
+    ;make the new row with the original values and the new stating month/year
+    set newrow (list (new-starting-month) (new-starting-year) (item 4 row))
+    ;add the new row to the list  starting-month starting-year frecuency section
+    set meetings-list lput newrow meetings-list
+    ;increment loop
+    set current-month current-month + 1
+  ]
+  report meetings-list
+end
+;<summary>
+;create the strategy-manager
+;</summary>
+to Make-Meetings-Manager
+  create-meetings-managers 1
+  ask meetings-managers[
+    hide-turtle
+    set meetings-list []
+    ;read the meetings file
+    file-open "scenario1-meetings.csv"
+    ;ignore first row
+    let row (csv:from-row file-read-line ";")
+    while [ not file-at-end? ] [
+      set row (csv:from-row file-read-line ";")
+      show(row)
+      ;map a meeting file row to a more simple representation
+      set meetings-list Make-Meeting-List row
+    ]
+    file-close
+    show meetings-list
+  ]
+end
+
+
+
+
+to Schedule-Campaings
+  Make-Campaings-Manager
+end
+
+to Make-Campaings-Manager
+  create-campaings-managers 1
+  ask campaings-managers[
+    hide-turtle
+    set campaings-list []
+    ;read the meetings file
+    file-open "scenario3.csv"
+    ;ignore first row
+    let row (csv:from-row file-read-line ";")
+    while [ not file-at-end? ] [
+      set row (csv:from-row file-read-line ";")
+      show(row)
+      ;map a meeting file row to a more simple representation
+      let focus-list Split item 9 row
+      set campaings-list Make-Campaing-List row focus-list
+    ]
+    file-close
+    show campaings-list
+  ]
+end
+
+to-report Make-Campaing-List[row focus-list]
+  let starting-year item 3 row
+  let ending-year item 5 row
+  let months 0
+  let years 0
+
+  ifelse starting-year  > ending-year[
+    print("The strategy table is wrong: ending year must be equal to or greater than starting year")
+  ][
+    ;years that the strategy lasts
+    set years ending-year - starting-year
+  ]
+  let ending-month item 4 row + (years * 12) ;ending month is ending-month + years in months
+  ;strategy duration in months
+  let duration ending-month - item 2 row ;ending-month - starting-month
+  
+  ;current-mont starts in the starting-month
+  let current-month item 2 row
+  ;new strategy row
+  let newrow []
+  ;make a new strategy row for every month of the original strategy
+  while [current-month <= ending-month][
+    let new-starting-year starting-year + floor (current-month / 12)
+    let new-starting-month (current-month mod 12)
+    ;fix problem with the 12 mod 12 situation
+    if new-starting-month = 0 [
+      ;if new-stating-month = 0 in fact is the 12º month
+      set new-starting-month 12
+      ;and there is not new year yet!
+      set new-starting-year new-starting-year - 1
+    ]
+    ;make the new row with the original values and the new stating month/year
+    set newrow (list (item 0 row) (item 1 row) (new-starting-month) (new-starting-year) (item 6 row)  (item 7 row) (item 8 row) focus-list)
+    ;add the new row to the list  critical-node-name behavior starting-month starting-year frecuency reach secondary-critical-node-name
+    set campaings-list lput newrow campaings-list
+    ;increment loop
+    set current-month current-month + 1
+  ]
+  report campaings-list
+end
+
+to Campaings
+  ask campaings-managers[
+    ;check if any trigger has been fired
+    let i 0
+    foreach campaings-list[
+      campaing -> if (item 2 campaing) = month [
+        if item 3 campaing = year [
+          ;sections
+          Run-Campaing item 0 campaing item 1 campaing item 5 campaing  item 6 campaing item 7 campaing
+          output-print (word ("Campaing Organizer:") (item 0 campaing) (" ") ("Date:") (item 2 campaing) "/" (item 3 campaing) (" ") ("Role:" ) (item 1 campaing) )
+          output-print ("----------------------------------------------------------------------------------------------------------------------------------")
+          if item 4 campaing = 1[
+            set campaings-list remove-item i campaings-list 
+            set i (i - 1)
+          ]
+        ]
+      ]
+      set i (i + 1)
+    ]
+  ]
+end
+
+to Run-Campaing[node opinion reach secondary-node-name focus]
+  ;select the critical node performing the communication
+  let current-critical-node one-of critical-nodes with [node-type = secondary-node-name]
+  if current-critical-node = nobody [show (secondary-node-name)]
+  ask current-critical-node[
+    let target-humats sort n-of round(reach * scope) my-out-links
+    foreach target-humats [ target-humat -> Critical-Node-Campaing [other-end] of target-humat node opinion focus]
+  ]
+end
+
+
+to Critical-Node-Campaing [target-humat node opinion focus]
+  ask target-humat [    
+    ;critical node "satisfaction"
+    let importance  0
+    
+    ifelse opinion = "supporter" [
+      set importance   1
+    ][
+      set importance  -1
+    ]
+
+    ;select trust of the primary node  
+    let trust-type-value [trust-type] of one-of critical-nodes with [node-type = node]
+    let current-trust 0
+    ifelse trust-type-value = "council"[
+      set current-trust city-council-trust
+    ][
+      ifelse trust-type-value = "opposition"[
+        set current-trust political-opposition-trust
+      ][
+        ifelse trust-type-value = "associations" [
+          set current-trust other-associations-trust
+        ][
+          ifelse trust-type-value = "media" [
+            set current-trust local-media-trust
+          ][
+            show("ERROR TRUST-TYPE-VALUE")
+            show(trust-type-value)
+          ]
+        ]
+      ]
+    ]
+    let signaling-persuasion current-trust * 0.2
+    ; seting new experiential and values satisfaction
+    ;signaling-humat satisfaction, trust in critical node, critical node satisfaction  
+    foreach focus [ focus-need ->
+      if  member? focus-need ["wellness" "all"][
+        set wellness-importance New-Need-Satisfaction wellness-importance signaling-persuasion importance
+        ;if  member? focus ["wellness"][show("wellness")]
+      ]
+      if  member? focus-need ["environmental-quality" "all"][
+        set environmental-quality-importance New-Need-Satisfaction environmental-quality-importance signaling-persuasion importance
+        ;if  member? focus ["environmental-quality"][show("environmental-quality")]
+      ]
+      if  member? focus-need ["comfort" "all"][
+        set comfort-importance New-Need-Satisfaction comfort-importance signaling-persuasion importance
+      ]
+      if  member? focus-need ["prestige" "all"][
+        set prestige-importance New-Need-Satisfaction prestige-importance signaling-persuasion importance
+      ]
+      if  member? focus-need ["participation" "all"][
+        set participation-importance New-Need-Satisfaction participation-importance signaling-persuasion importance   
+      ]
+    ]
+    
+    ;update behaviour decision
+    Update-Evaluations
+    Update-Dissonances
+    Choose-Behaviour
+    Update-Evaluations
+    Update-Dissonances
+  ] 
+end
+
+to Event-Scenario-1
+  
+  if month = 12 and year = 2017 and scenario1-event = 1 [
+    show("NUMERO 36")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 12 and year = 2017 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 35")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 12 and year = 2017 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 9 and year = 2017 and scenario1-event = 1 [
+    show("NUMERO 34")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 9 and year = 2017 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 33")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 9 and year = 2017 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 6 and year = 2017 and scenario1-event = 1 [
+    show("NUMERO 32")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 6 and year = 2017 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 31")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 6 and year = 2017 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 3 and year = 2017 and scenario1-event = 1 [
+    show("NUMERO 30")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 3 and year = 2017 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 29")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 3 and year = 2017 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 1 and year = 2017 and scenario1-event = 1 [
+    show("NUMERO 28")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 1 and year = 2017 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 27")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 1 and year = 2017 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 9 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 26")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 9 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 25")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 9 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 8 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 24")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 8 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 23")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 8 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 7 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 22")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 7 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 21")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 7 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 6 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 20")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 6 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 19")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 6 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 5 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 18")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 5 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 17")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 5 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 4 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 16")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 4 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 15")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 4 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 3 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 14")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 3 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 13")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 3 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 2 and year = 2016 and scenario1-event = 1 [
+    show("NUMERO 12")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 2 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NUMERO 11")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 2 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 1 and year = 2016 and scenario1-event = 1 [
+    show("DECIMA")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 1 and year = 2016 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("NOVENA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 1 and year = 2016 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 12 and year = 2015 and scenario1-event = 1 [
+    show("OCTAVA")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 12 and year = 2015 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("SEPTIMA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 12 and year = 2015 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  if month = 11 and year = 2015 and scenario1-event = 1 [
+    show("SEXTA")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 11 and year = 2015 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("QUINTA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 11 and year = 2015 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 10 and year = 2015 and scenario1-event = 1 [
+    show("CUARTA")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  ifelse month = 10 and year = 2015 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("TERCERA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 10 and year = 2015 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+  if month = 9 and year = 2015 and scenario1-event = 1 [
+    show("SEGUNDA")
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  ifelse month = 9 and year = 2015 and scenario1-event = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario1-event 1
+    show("PRIMERA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ][
+    if month = 9 and year = 2015 and scenario1-event = 1 [
+      set scenario1-event 0
+    ]
+  ]
+  
+  
+
+end
+to Event-Scenario-3
+  ;meeting 09/2015
+  if month = 11 and year = 2015 and scenario3-event1 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("CUARTA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 10 and year = 2015 and scenario3-event1 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("TERCERA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 9 and year = 2015 and scenario3-event1 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("SEGUNDA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  if month = 9 and year = 2015 and scenario3-event1 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario3-event1 1
+    show("PRIMERA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+  ;meeting 03/2016
+  if month = 5 and year = 2016 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("OCTAVA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 4 and year = 2016 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("SEPTIMA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 3 and year = 2016 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("SEXTA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"]
+  ]
+  
+  if month = 3 and year = 2016 and scenario3-event2 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario3-event2 1
+    show("QUINTA")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+  
+  ;meeting 09/2016
+  if month = 11 and year = 2016 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO12")
+    set scenario3-event2 0
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 10 and year = 2016 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO11")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 9 and year = 2016 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("DECIMA")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  if month = 9 and year = 2016 and scenario3-event3 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    show("NOVENA")
+    set scenario3-event3 1
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+  
+  if month = 5 and year = 2017 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    set scenario3-event3 0
+    show("NUMERO16")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 4 and year = 2017 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO15")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 3 and year = 2017 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO14")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"]
+  ]
+  
+  if month = 3 and year = 2017 and scenario3-event2 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario3-event2 1
+    show("NUMERO13")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+  
+  ;meeting 09/2017
+  if month = 11 and year = 2017 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    set scenario3-event2 0
+    show("NUMERO20")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 10 and year = 2017 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO19")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 9 and year = 2017 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO18")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  if month = 9 and year = 2017 and scenario3-event3 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    show("NUMERO17")
+    set scenario3-event3 1
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+  
+  
+  
+  if month = 5 and year = 2018 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    set scenario3-event3 0
+    show("NUMERO24")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 4 and year = 2018 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO23")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 3 and year = 2018 and scenario3-event2 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO22")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"]
+  ]
+  
+  if month = 3 and year = 2018 and scenario3-event2 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    set scenario3-event2 1
+    show("NUMERO21")
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+  
+  ;meeting 09/2018
+  if month = 11 and year = 2018 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO28")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 10 and year = 2018 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO27")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  if month = 9 and year = 2018 and scenario3-event3 = 1 [
+    set meeting-comm-prob-late meeting-comm-prob-late * 0.8
+    show("NUMERO26")
+    Meetings-Conclusion ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] 
+  ]
+  
+  if month = 9 and year = 2018 and scenario3-event3 = 0 [
+    set meeting-comm-prob-late meeting-comm-prob
+    show("NUMERO25")
+    set scenario3-event3 1
+    Run-Meetings ["0801910059" "0801910056" "0801910068" "0801910073" "0801910058" "0801910064" "0801910062" "0801910070" "0801910066" "0801910075" "0801910069" "0801910065" "0801910057" "0801910074" "0801910072" "0801910067" "0801910060" "0801910061" "0801910071" "0801910063"] meeting-comm-prob
+  ]
+end
+to Run-Meetings [meeting-sections comm-prob]
+  set plot-highlight 1
+  foreach meeting-sections[meeting-section -> 
+    ask humats with [section = meeting-section][
+      let agentlist sort (other humats with [section = meeting-section])
+      foreach agentlist [meeting-humat ->
+        if (random-float 1) <= meeting-comm-prob [
+          set meeting-conv meeting-conv + 1
+          ask meeting-humat [
+            ;get needs evaluations from signaling humat
+            let signaling-humat-wellness-evaluation-A [wellness-evaluation-A] of myself
+            let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+            let signaling-humat-comfort-evaluation-A [comfort-evaluation-A] of myself
+            let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+            let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+            
+            let signaling-humat-wellness-evaluation-B [wellness-evaluation-B] of myself
+            let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+            let signaling-humat-comfort-evaluation-B [comfort-evaluation-B] of myself
+            let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+            let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+            
+            ;get importances from signaling humat
+            let signaling-humat-wellness-importance [wellness-importance] of myself
+            let signaling-humat-environmental-quality-importance [environmental-quality-importance] of myself
+            let signaling-humat-comfort-importance [comfort-importance] of myself
+            let signaling-humat-prestige-importance [prestige-importance] of myself
+            let signaling-humat-participation-importance [participation-importance] of myself
+            
+            ;calculate similarities for alternative A
+            let similarity-wellness-importance-A Need-Similarity wellness-evaluation-A signaling-humat-wellness-evaluation-A wellness-importance signaling-humat-wellness-importance
+            let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A signaling-humat-environmental-quality-evaluation-A environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-comfort-importance-A Need-Similarity comfort-evaluation-A signaling-humat-comfort-evaluation-A comfort-importance signaling-humat-comfort-importance
+            let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A signaling-humat-prestige-evaluation-A prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-A Need-Similarity participation-evaluation-A signaling-humat-participation-evaluation-A participation-importance signaling-humat-participation-importance
+            
+            ;calculate similarities for alternative B
+            let similarity-wellness-importance-B Need-Similarity wellness-evaluation-B signaling-humat-wellness-evaluation-B wellness-importance signaling-humat-wellness-importance
+            let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B signaling-humat-environmental-quality-evaluation-B environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-comfort-importance-B Need-Similarity comfort-evaluation-B signaling-humat-comfort-evaluation-B comfort-importance signaling-humat-comfort-importance
+            let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B signaling-humat-prestige-evaluation-B prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-B Need-Similarity participation-evaluation-B signaling-humat-participation-evaluation-B participation-importance signaling-humat-participation-importance
+            
+            ;get relative-aspiration
+            let rel-aspiration adjacents-trust
+            
+            ; persuasion is a multiplication of need-similarity and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+            let persuasion-wellness-A (similarity-wellness-importance-A * rel-aspiration) 
+            let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+            let persuasion-comfort-A (similarity-comfort-importance-A * rel-aspiration) 
+            let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+            let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+            
+            
+            let persuasion-wellness-B (similarity-wellness-importance-B * rel-aspiration) 
+            let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+            let persuasion-comfort-B (similarity-comfort-importance-B * rel-aspiration) 
+            let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+            let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+            
+            ; seting new experiential and values satisfaction
+            set wellness-satisfaction-A New-Need-Satisfaction wellness-satisfaction-A persuasion-wellness-A [wellness-satisfaction-A] of myself
+            set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of myself
+            set comfort-satisfaction-A New-Need-Satisfaction comfort-satisfaction-A persuasion-comfort-A [comfort-satisfaction-A] of myself
+            set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of myself
+            set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of myself
+            
+            
+            set wellness-satisfaction-B New-Need-Satisfaction wellness-satisfaction-B persuasion-wellness-B [wellness-satisfaction-B] of myself
+            set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of myself
+            set comfort-satisfaction-B New-Need-Satisfaction comfort-satisfaction-B persuasion-comfort-B [comfort-satisfaction-B] of myself
+            set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of myself
+            set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of myself
+            
+            ;update behaviour decision
+            Update-Evaluations
+            Update-Dissonances
+            Choose-Behaviour
+            Update-Evaluations
+            Update-Dissonances
+            
+            ;update link same-ba=?
+            ask my-out-links[
+              ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+            ]
+          ]
+          ;update link same-ba?    
+          ;update dissonances of signaling humat
+          Update-Evaluations
+          Update-Dissonances
+          Choose-Behaviour
+          Update-Evaluations
+          Update-Dissonances
+          
+          ask my-out-links [
+            ;update link same-ba?
+            ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+          ]
+        ] 
+        
+      ]
+    ]   
+  ]
+end
+
+to Meetings-Conclusion [meeting-sections]
+  set plot-highlight 1
+  foreach meeting-sections[meeting-section -> 
+    ask humats with [section = meeting-section][
+      let agentlist sort [other-end] of my-out-links
+      foreach agentlist [meeting-humat ->
+        if (random-float 1) <= meeting-comm-prob-late [
+          set meeting-conv meeting-conv + 1
+          ask meeting-humat [
+            ;get needs evaluations from signaling humat
+            let signaling-humat-wellness-evaluation-A [wellness-evaluation-A] of myself
+            let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+            let signaling-humat-comfort-evaluation-A [comfort-evaluation-A] of myself
+            let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+            let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+            
+            let signaling-humat-wellness-evaluation-B [wellness-evaluation-B] of myself
+            let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+            let signaling-humat-comfort-evaluation-B [comfort-evaluation-B] of myself
+            let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+            let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+            
+            ;get importances from signaling humat
+            let signaling-humat-wellness-importance [wellness-importance] of myself
+            let signaling-humat-environmental-quality-importance [environmental-quality-importance] of myself
+            let signaling-humat-comfort-importance [comfort-importance] of myself
+            let signaling-humat-prestige-importance [prestige-importance] of myself
+            let signaling-humat-participation-importance [participation-importance] of myself
+            
+            ;calculate similarities for alternative A
+            let similarity-wellness-importance-A Need-Similarity wellness-evaluation-A signaling-humat-wellness-evaluation-A wellness-importance signaling-humat-wellness-importance
+            let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A signaling-humat-environmental-quality-evaluation-A environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-comfort-importance-A Need-Similarity comfort-evaluation-A signaling-humat-comfort-evaluation-A comfort-importance signaling-humat-comfort-importance
+            let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A signaling-humat-prestige-evaluation-A prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-A Need-Similarity participation-evaluation-A signaling-humat-participation-evaluation-A participation-importance signaling-humat-participation-importance
+            
+            ;calculate similarities for alternative B
+            let similarity-wellness-importance-B Need-Similarity wellness-evaluation-B signaling-humat-wellness-evaluation-B wellness-importance signaling-humat-wellness-importance
+            let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B signaling-humat-environmental-quality-evaluation-B environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-comfort-importance-B Need-Similarity comfort-evaluation-B signaling-humat-comfort-evaluation-B comfort-importance signaling-humat-comfort-importance
+            let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B signaling-humat-prestige-evaluation-B prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-B Need-Similarity participation-evaluation-B signaling-humat-participation-evaluation-B participation-importance signaling-humat-participation-importance
+            
+            ;get relative-aspiration
+            let rel-aspiration adjacents-trust
+            
+            ; persuasion is a multiplication of need-similarity and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+            let persuasion-wellness-A (similarity-wellness-importance-A * rel-aspiration) 
+            let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+            let persuasion-comfort-A (similarity-comfort-importance-A * rel-aspiration) 
+            let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+            let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+            
+            
+            let persuasion-wellness-B (similarity-wellness-importance-B * rel-aspiration) 
+            let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+            let persuasion-comfort-B (similarity-comfort-importance-B * rel-aspiration) 
+            let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+            let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+            
+            ; seting new experiential and values satisfaction
+            set wellness-satisfaction-A New-Need-Satisfaction wellness-satisfaction-A persuasion-wellness-A [wellness-satisfaction-A] of myself
+            set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of myself
+            set comfort-satisfaction-A New-Need-Satisfaction comfort-satisfaction-A persuasion-comfort-A [comfort-satisfaction-A] of myself
+            set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of myself
+            set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of myself
+            
+            
+            set wellness-satisfaction-B New-Need-Satisfaction wellness-satisfaction-B persuasion-wellness-B [wellness-satisfaction-B] of myself
+            set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of myself
+            set comfort-satisfaction-B New-Need-Satisfaction comfort-satisfaction-B persuasion-comfort-B [comfort-satisfaction-B] of myself
+            set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of myself
+            set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of myself
+            
+            ;update behaviour decision
+            Update-Evaluations
+            Update-Dissonances
+            Choose-Behaviour
+            Update-Evaluations
+            Update-Dissonances
+            
+            ;update link same-ba=?
+            ask my-out-links[
+              ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+            ]
+          ]
+          ;update link same-ba?    
+          ;update dissonances of signaling humat
+          Update-Evaluations
+          Update-Dissonances
+          Choose-Behaviour
+          Update-Evaluations
+          Update-Dissonances
+          
+          ask my-out-links [
+            ;update link same-ba?
+            ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+          ]
+        ] 
+        
+      ]
+    ]   
+  ]
+end
+
+
+;scenario 2c
+to Make-Scenario2C-Manager
+  create-scenario2c-managers 1
+  ask scenario2c-managers[
+    hide-turtle
+    set strategies-list [] 
+    file-open "scenario2C.csv"
+    ;ignore first row
+    let row (csv:from-row file-read-line ";")
+    while [ not file-at-end? ] [
+      set row (csv:from-row file-read-line ";")
+      ;map a strategy file row to a more simple representation
+      let focus-list Split item 9 row
+      set strategies-list Make-Strategy-List row focus-list
+    ]
+    file-close
+    show strategies-list
+  ]
+end
+
+to Scenario2C-Strategy 
+  ask scenario2c-managers[
+    ;check if any trigger has been fired
+    let i 0
+    foreach strategies-list[
+      strategy -> if (item 2 strategy) = month [
+        if item 3 strategy = year [
+          ;critical-node-name behavior starting-month starting-year frecuency reach secondary-critical-node-name focus
+          Run-Strategy-Scenario2C item 0 strategy item 1 strategy item 5 strategy  item 6 strategy item 7 strategy
+          output-print (word ("Organizer:") (item 0 strategy) (" ") ("Date:") (item 2 strategy) "/" (item 3 strategy) (" ") ("Role:" ) (item 7 strategy) )
+          output-print ("----------------------------------------------------------------------------------------------------------------------------------")
+          if item 4 strategy = 1[
+            set strategies-list remove-item i strategies-list 
+            set i (i - 1)
+          ]
+        ]
+        
+      ]
+      set i (i + 1)
+    ]
+  ]
+end
+
+to Run-Strategy-Scenario2C[node opinion reach secondary-node-name focus]
+  ;select the critical node performing the communication
+  let current-critical-node one-of critical-nodes with [node-type = secondary-node-name]
+  if current-critical-node = nobody [show (secondary-node-name)]
+  ask current-critical-node[
+    let target-humats sort n-of round(reach * scope) my-out-links with [[children?] of other-end = 1]
+    foreach target-humats [ target-humat -> critical-node-signaling [other-end] of target-humat node opinion focus]
+  ]
+end
