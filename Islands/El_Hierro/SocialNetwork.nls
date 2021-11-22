@@ -1,0 +1,81 @@
+;<summary>
+; creates a new social network;
+; For the neighbors network creates a social circle for each humat
+; For the friends network creates a random network based in homopholy in age and education level
+;</summary>
+to Set-Social-Networks
+  ;neighbor social circle
+  ask humats[
+    create-adjacents-to other humats in-radius social-reach  [set hidden? true]
+  ]
+end
+
+to Set-Friends-Networks
+  ;friends
+  ask humats[
+    ;possible friends homophily on age and education level
+    let friends-humats up-to-n-of numFriends other humats with [ age > [age] of myself - 5 and age < [age] of myself + 5 and education-level = [education-level] of myself]
+    ;ask friends to make a link with this humat
+    ask friends-humats [
+      create-friend-to myself [set hidden? true]
+      ;ask the humat to make a link to his friend
+      ask myself [create-friend-to myself [set hidden? true] ]
+    ]
+    ;random friend with %5 probability
+    let probability 0.05
+    if random-float 1.0 < 0.05 [
+      let humat-friend one-of other humats with[link-with myself = nobody]
+      create-friend-to humat-friend [set hidden? true]
+      ask humat-friend [
+        create-friend-to myself [set hidden? true]
+      ]
+    ]
+  ]
+end
+
+
+to Set-Critical-Node-Network
+  ask critical-nodes[
+    create-critical-node-links-to n-of scope humats
+    ask my-out-links [
+      let trust-type-value [trust-type] of myself
+      ifelse trust-type-value = "council"[
+        set trust [city-council-trust] of other-end
+      ][
+        ifelse trust-type-value = "gorona"[
+          set trust [gorona-viento-trust] of other-end
+        ][
+          ifelse trust-type-value = "associations" [
+            set trust [other-associations-trust] of other-end
+          ][
+            ifelse trust-type-value = "opposition"[
+              set trust [political-opposition-trust] of other-end
+            ][
+              set trust [local-media-trust] of other-end
+            ]
+            
+          ]
+        ]
+      ]
+    ]
+  ]
+
+end
+;<summary>
+; Set links initial values: same behavior? and trust 
+;</summary>
+to Set-Links
+  ask humats [
+    ask my-out-adjacents[
+      ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+      set trust [adjacents-trust] of myself
+      set label trust
+    ]
+    ask my-out-friends[
+      ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+      set trust [friends-trust] of myself
+      set label trust
+    ]
+  ]
+end
+

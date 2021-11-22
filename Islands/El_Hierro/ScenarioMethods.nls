@@ -1,0 +1,1257 @@
+to Trust-Event
+  if month = 6 and year = 2014 and trust-event-flag [;inauguración de la planta
+    set trust-event-flag  false
+    output-print (word ("Trust-Event"))
+    output-print ("----------------------------------------------------------------------------------------------------------------------------------")
+    ask humats [
+      set city-council-trust city-council-trust * new-trust
+      set gorona-viento-trust gorona-viento-trust * new-trust
+      ;aumentar confianza oposición
+      set political-opposition-trust political-opposition-trust + (political-opposition-trust * new-trust) 
+      if political-opposition-trust > 1 [
+        set political-opposition-trust 1
+      ]
+    ]
+  ]
+end
+
+to Select-Influencer
+  ;let audience-links [other-end] of [my-out-links] of critical-nodes with [trust-type = "media"]
+  let local-media-node one-of critical-nodes with [node-type = "Local Media"]
+  let audience [[other-end] of my-out-links] of local-media-node
+  set influencer first audience
+  set influencer2 item 2 audience
+  foreach audience [ possible-influencer -> 
+    ifelse ([behavior] of possible-influencer = "U" or [behavior] of possible-influencer = "B") and [economic-sustainability-importance] of possible-influencer >=  [economic-sustainability-importance] of influencer [
+      set influencer possible-influencer
+    ][
+      if ([behavior] of possible-influencer = "U" or [behavior] of possible-influencer = "B") and [economic-sustainability-importance] of possible-influencer >=  [economic-sustainability-importance] of influencer2 [
+        set influencer2 possible-influencer
+      ]
+    ]
+  ]
+  ;show audience with [(behavior = "A" or behavior = "U") and economic-sustainability-importance >= 0.7]
+  ;let possible-influencers audience-links with [(behavior = "A" or behavior = "U") and economic-sustainability-satisfaction-A <= 0.5 and economic-sustainability-satisfaction-B >= 0.5 ]
+  ask influencer[set size 3]
+  ask influencer2[set size 3]
+  show (influencer)
+  show(influencer2)
+end
+to Run-Influencers
+  if influencer-selected? = 1[
+    let min-prob 0.2
+    let prob min-prob
+    if (random-float 1) <= prob [
+      ask humats with [size = 3] [
+        let selected-links sort up-to-n-of 30 my-out-links
+        foreach selected-links [ x-link ->
+          Influencer-Signaling ([other-end] of x-link )
+        ]
+      ]  
+    ]
+  ]
+  
+end
+to Influencer-Signaling [selected-humat]
+ let signaled-humat selected-humat
+ ask signaled-humat [
+    show("INFLUENCER")
+    ;get needs evaluations from signaling humat
+    let signaling-humat-energy-independence-evaluation-A [energy-independence-evaluation-A] of myself
+    let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+    let signaling-humat-economic-sustainability-evaluation-A [economic-sustainability-evaluation-A] of myself
+    let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+    let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+    
+    let signaling-humat-energy-independence-evaluation-B [energy-independence-evaluation-B] of myself
+    let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+    let signaling-humat-economic-sustainability-evaluation-B [economic-sustainability-evaluation-B] of myself
+    let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+    let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+    
+    
+    ;get relative-aspiration
+    let link-list sort my-out-links
+    let reverse-link 0
+    foreach link-list [link-in-list -> if [who] of [other-end] of link-in-list = [who] of myself [set reverse-link link-in-list]]
+    let signaling-persuasion [trust] of reverse-link
+    
+    ; seting new experiential and values satisfaction
+    set energy-independence-satisfaction-A New-Need-Satisfaction energy-independence-satisfaction-A signaling-persuasion [energy-independence-satisfaction-A] of myself
+    set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A signaling-persuasion [environmental-quality-satisfaction-A] of myself
+    set economic-sustainability-satisfaction-A New-Need-Satisfaction economic-sustainability-satisfaction-A signaling-persuasion [economic-sustainability-satisfaction-A] of myself
+    set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A signaling-persuasion [prestige-satisfaction-A] of myself
+    set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A signaling-persuasion [participation-satisfaction-A] of myself
+    
+    
+    set energy-independence-satisfaction-B New-Need-Satisfaction energy-independence-satisfaction-B signaling-persuasion [energy-independence-satisfaction-B] of myself
+    set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B signaling-persuasion [environmental-quality-satisfaction-B] of myself
+    set economic-sustainability-satisfaction-B New-Need-Satisfaction economic-sustainability-satisfaction-B signaling-persuasion [economic-sustainability-satisfaction-B] of myself
+    set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B signaling-persuasion [prestige-satisfaction-B] of myself
+    set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B signaling-persuasion [participation-satisfaction-B] of myself
+    
+    ;update behaviour decision
+    Update-Evaluations
+    Update-Dissonances
+    Choose-Behaviour
+    Update-Evaluations
+    Update-Dissonances
+  ]
+  ;update dissonances of signaling humat
+  Update-Evaluations
+  Update-Dissonances
+  Choose-Behaviour
+  Update-Evaluations
+  Update-Dissonances
+end
+
+to Event-Scenario-3
+   
+  if month = 7 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 5 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2019 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+
+  
+  if month = 7 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    set scenario3-event1  0
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 5 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2018 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+
+end
+
+to Event-Scenario-3B
+
+  if month = 8 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 8 and year = 2019 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 7 and year = 2019 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2019 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2019 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+
+  if month = 8 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 8 and year = 2018 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 7 and year = 2018 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2018 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2018 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+
+  if month = 7 and year = 2017 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2017 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2017 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2017 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2017 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2017 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2016 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2016 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2016 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2016 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2016 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2016 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2015 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2015 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2015 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2015 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2015 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2015 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+
+  if month = 12 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 12 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 11 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 11 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 10 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 10 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 9 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 9 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 8 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 8 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 7 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 5 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 5 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 4 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 3 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 3 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 2 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  if month = 1 and year = 2014 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2014 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2013 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2013 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2013 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2013 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2013 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2013 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2012 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2012 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2012 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2012 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2012 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2012 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2011 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2011 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2011 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2011 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2011 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2011 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2010 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2010 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2010 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2010 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2010 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2010 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 12 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 12 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 11 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 11 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 10 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 10 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 9 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 9 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 8 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 8 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 7 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 5 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 5 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 4 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 3 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 3 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 2 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  if month = 1 and year = 2009 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2009 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2008 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2008 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2008 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2008 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2008 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2008 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2007 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2007 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2007 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2007 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2007 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2007 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2006 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2006 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2006 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2006 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2006 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2006 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2005 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2005 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2005 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2005 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2005 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2005 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  if month = 7 and year = 2004 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2004 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2004 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2004 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2004 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2004 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  
+  
+  if month = 12 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 12 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 11 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 11 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 10 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 10 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 9 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 9 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 8 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 8 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 7 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 5 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 5 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 4 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 3 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 3 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 2 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  if month = 1 and year = 2003 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 1 and year = 2003 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  if month = 12 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 12 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 11 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 11 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 10 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 10 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 9 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 9 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 8 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 8 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 7 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 7 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 6 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 6 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 5 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 5 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 4 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 4 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 3 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 3 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 2 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+    set scenario3-event1  0
+  ]
+  if month = 2 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  
+  if month = 1 and year = 2002 and scenario3-event1 = 1 [
+    set scenario3-comm-prob-late scenario3-comm-prob-late * 0.8
+    Meetings-Conclusion ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+  if month = 1 and year = 2002 and scenario3-event1 = 0 [
+    set scenario3-event1  1
+    set scenario3-comm-prob-late scenario3-comm-prob
+    Run-Meetings ["3801301002" "3890101001" "3804801002" "3804801004" "3801301001" "3804801001"]
+  ]
+
+end
+
+to Meetings-Conclusion [meeting-sections]
+  set plot-highlight 1
+  foreach meeting-sections[meeting-section -> 
+    ask humats with [section = meeting-section][
+      let agentlist sort [other-end] of my-out-links
+      foreach agentlist [meeting-humat ->
+        if (random-float 1) <= scenario3-comm-prob-late [
+          set meeting-conv meeting-conv + 1
+          ask meeting-humat [
+            ;get needs evaluations from signaling humat
+            let signaling-humat-energy-independence-evaluation-A [energy-independence-evaluation-A] of myself
+            let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+            let signaling-humat-economic-sustainability-evaluation-A [economic-sustainability-evaluation-A] of myself
+            let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+            let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+            
+            let signaling-humat-energy-independence-evaluation-B [energy-independence-evaluation-B] of myself
+            let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+            let signaling-humat-economic-sustainability-evaluation-B [economic-sustainability-evaluation-B] of myself
+            let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+            let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+            
+            ;get importances from signaling humat
+            let signaling-humat-energy-independence-importance [energy-independence-importance] of myself
+            let signaling-humat-environmental-quality-importance [environmental-quality-importance] of myself
+            let signaling-humat-economic-sustainability-importance [economic-sustainability-importance] of myself
+            let signaling-humat-prestige-importance [prestige-importance] of myself
+            let signaling-humat-participation-importance [participation-importance] of myself
+            
+            ;calculate similarities for alternative A
+            let similarity-energy-independence-importance-A Need-Similarity energy-independence-evaluation-A signaling-humat-energy-independence-evaluation-A energy-independence-importance signaling-humat-energy-independence-importance
+            let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A signaling-humat-environmental-quality-evaluation-A environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-economic-sustainability-importance-A Need-Similarity economic-sustainability-evaluation-A signaling-humat-economic-sustainability-evaluation-A economic-sustainability-importance signaling-humat-economic-sustainability-importance
+            let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A signaling-humat-prestige-evaluation-A prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-A Need-Similarity participation-evaluation-A signaling-humat-participation-evaluation-A participation-importance signaling-humat-participation-importance
+            
+            ;calculate similarities for alternative B
+            let similarity-energy-independence-importance-B Need-Similarity energy-independence-evaluation-B signaling-humat-energy-independence-evaluation-B energy-independence-importance signaling-humat-energy-independence-importance
+            let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B signaling-humat-environmental-quality-evaluation-B environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-economic-sustainability-importance-B Need-Similarity economic-sustainability-evaluation-B signaling-humat-economic-sustainability-evaluation-B economic-sustainability-importance signaling-humat-economic-sustainability-importance
+            let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B signaling-humat-prestige-evaluation-B prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-B Need-Similarity participation-evaluation-B signaling-humat-participation-evaluation-B participation-importance signaling-humat-participation-importance
+            
+            ;get relative-aspiration
+            let rel-aspiration adjacents-trust
+            
+            ; persuasion is a multiplication of need-similarity and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+            let persuasion-energy-independence-A (similarity-energy-independence-importance-A * rel-aspiration) 
+            let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+            let persuasion-economic-sustainability-A (similarity-economic-sustainability-importance-A * rel-aspiration) 
+            let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+            let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+            
+            
+            let persuasion-energy-independence-B (similarity-energy-independence-importance-B * rel-aspiration) 
+            let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+            let persuasion-economic-sustainability-B (similarity-economic-sustainability-importance-B * rel-aspiration) 
+            let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+            let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+            
+            ; seting new experiential and values satisfaction
+            set energy-independence-satisfaction-A New-Need-Satisfaction energy-independence-satisfaction-A persuasion-energy-independence-A [energy-independence-satisfaction-A] of myself
+            set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of myself
+            set economic-sustainability-satisfaction-A New-Need-Satisfaction economic-sustainability-satisfaction-A persuasion-economic-sustainability-A [economic-sustainability-satisfaction-A] of myself
+            set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of myself
+            set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of myself
+            
+            
+            set energy-independence-satisfaction-B New-Need-Satisfaction energy-independence-satisfaction-B persuasion-energy-independence-B [energy-independence-satisfaction-B] of myself
+            set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of myself
+            set economic-sustainability-satisfaction-B New-Need-Satisfaction economic-sustainability-satisfaction-B persuasion-economic-sustainability-B [economic-sustainability-satisfaction-B] of myself
+            set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of myself
+            set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of myself
+            
+            ;update behaviour decision
+            Update-Evaluations
+            Update-Dissonances
+            Choose-Behaviour
+            Update-Evaluations
+            Update-Dissonances
+            
+            ;update link same-ba=?
+            ask my-out-links[
+              ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+            ]
+          ]
+          ;update link same-ba?    
+          ;update dissonances of signaling humat
+          Update-Evaluations
+          Update-Dissonances
+          Choose-Behaviour
+          Update-Evaluations
+          Update-Dissonances
+          
+          ask my-out-links [
+            ;update link same-ba?
+            ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+          ]
+        ] 
+        
+      ]
+    ]   
+  ]
+end
+
+to Run-Meetings [meeting-sections]
+  set plot-highlight 1
+  foreach meeting-sections[meeting-section -> 
+    ask humats with [section = meeting-section][
+      let agentlist sort (other humats with [section = meeting-section])
+      foreach agentlist [meeting-humat ->
+        if (random-float 1) <= scenario3-comm-prob [
+          set meeting-conv meeting-conv + 1
+          ask meeting-humat [
+            
+            let signaling-humat-energy-independence-evaluation-A [energy-independence-evaluation-A] of myself
+            let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+            let signaling-humat-economic-sustainability-evaluation-A [economic-sustainability-evaluation-A] of myself
+            let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+            let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+            
+            let signaling-humat-energy-independence-evaluation-B [energy-independence-evaluation-B] of myself
+            let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+            let signaling-humat-economic-sustainability-evaluation-B [economic-sustainability-evaluation-B] of myself
+            let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+            let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+            
+            ;get importances from signaling humat
+            let signaling-humat-energy-independence-importance [energy-independence-importance] of myself
+            let signaling-humat-environmental-quality-importance [environmental-quality-importance] of myself
+            let signaling-humat-economic-sustainability-importance [economic-sustainability-importance] of myself
+            let signaling-humat-prestige-importance [prestige-importance] of myself
+            let signaling-humat-participation-importance [participation-importance] of myself
+            
+            ;calculate similarities for alternative A
+            let similarity-energy-independence-importance-A Need-Similarity energy-independence-evaluation-A signaling-humat-energy-independence-evaluation-A energy-independence-importance signaling-humat-energy-independence-importance
+            let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A signaling-humat-environmental-quality-evaluation-A environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-economic-sustainability-importance-A Need-Similarity economic-sustainability-evaluation-A signaling-humat-economic-sustainability-evaluation-A economic-sustainability-importance signaling-humat-economic-sustainability-importance
+            let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A signaling-humat-prestige-evaluation-A prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-A Need-Similarity participation-evaluation-A signaling-humat-participation-evaluation-A participation-importance signaling-humat-participation-importance
+            
+            ;calculate similarities for alternative B
+            let similarity-energy-independence-importance-B Need-Similarity energy-independence-evaluation-B signaling-humat-energy-independence-evaluation-B energy-independence-importance signaling-humat-energy-independence-importance
+            let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B signaling-humat-environmental-quality-evaluation-B environmental-quality-importance signaling-humat-environmental-quality-importance
+            let similarity-economic-sustainability-importance-B Need-Similarity economic-sustainability-evaluation-B signaling-humat-economic-sustainability-evaluation-B economic-sustainability-importance signaling-humat-economic-sustainability-importance
+            let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B signaling-humat-prestige-evaluation-B prestige-importance signaling-humat-prestige-importance
+            let similarity-participation-importance-B Need-Similarity participation-evaluation-B signaling-humat-participation-evaluation-B participation-importance signaling-humat-participation-importance
+            
+            ;get relative-aspiration
+            let rel-aspiration adjacents-trust
+            
+            ; persuasion is a multiplication of need-similarity and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+            let persuasion-energy-independence-A (similarity-energy-independence-importance-A * rel-aspiration) 
+            let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+            let persuasion-economic-sustainability-A (similarity-economic-sustainability-importance-A * rel-aspiration) 
+            let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+            let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+            
+            
+            let persuasion-energy-independence-B (similarity-energy-independence-importance-B * rel-aspiration) 
+            let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+            let persuasion-economic-sustainability-B (similarity-economic-sustainability-importance-B * rel-aspiration) 
+            let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+            let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+            
+            ; seting new experiential and values satisfaction
+            set energy-independence-satisfaction-A New-Need-Satisfaction energy-independence-satisfaction-A persuasion-energy-independence-A [energy-independence-satisfaction-A] of myself
+            set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of myself
+            set economic-sustainability-satisfaction-A New-Need-Satisfaction economic-sustainability-satisfaction-A persuasion-economic-sustainability-A [economic-sustainability-satisfaction-A] of myself
+            set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of myself
+            set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of myself
+            
+            
+            set energy-independence-satisfaction-B New-Need-Satisfaction energy-independence-satisfaction-B persuasion-energy-independence-B [energy-independence-satisfaction-B] of myself
+            set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of myself
+            set economic-sustainability-satisfaction-B New-Need-Satisfaction economic-sustainability-satisfaction-B persuasion-economic-sustainability-B [economic-sustainability-satisfaction-B] of myself
+            set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of myself
+            set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of myself
+            
+            ;update behaviour decision
+            Update-Evaluations
+            Update-Dissonances
+            Choose-Behaviour
+            Update-Evaluations
+            Update-Dissonances
+            
+            ;update link same-ba=?
+            ask my-out-links[
+              ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+            ]
+          ]
+          ;update link same-ba?    
+          ;update dissonances of signaling humat
+          Update-Evaluations
+          Update-Dissonances
+          Choose-Behaviour
+          Update-Evaluations
+          Update-Dissonances
+          
+          ask my-out-links [
+            ;update link same-ba?
+            ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+          ]
+        ] 
+        
+      ]
+    ]   
+  ]
+end

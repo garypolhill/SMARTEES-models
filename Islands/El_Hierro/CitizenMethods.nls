@@ -1,0 +1,311 @@
+;<summary>
+;The citizen tries to influence another agent in his network, prioritizing those with whom he does not share an opinion.
+;This influence depends on the ability to influence of this agent, the stubbornness of the other agent and the agents similarity of needs.
+;</summary>
+to Signal-Comm
+  let sorted-link-list Sort-List-Signaling my-out-links
+  ;select the first humat of the sorted list
+  let signaled-humat [other-end] of First sorted-link-list
+  set signaling 1
+  ask signaled-humat [
+    ;get needs evaluations from signaling humat
+    let signaling-humat-energy-independence-evaluation-A [energy-independence-evaluation-A] of myself
+    let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+    let signaling-humat-economic-sustainability-evaluation-A [economic-sustainability-evaluation-A] of myself
+    let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+    let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+    
+    let signaling-humat-energy-independence-evaluation-B [energy-independence-evaluation-B] of myself
+    let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+    let signaling-humat-economic-sustainability-evaluation-B [economic-sustainability-evaluation-B] of myself
+    let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+    let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+    
+    ;get importances from signaling humat
+    let signaling-humat-energy-independence-importance [energy-independence-importance] of myself
+    let signaling-humat-environmental-quality-importance [environmental-quality-importance] of myself
+    let signaling-humat-economic-sustainability-importance [economic-sustainability-importance] of myself
+    let signaling-humat-prestige-importance [prestige-importance] of myself
+    let signaling-humat-participation-importance [participation-importance] of myself
+    
+    ;calculate similarities for alternative A
+    let similarity-energy-independence-importance-A Need-Similarity energy-independence-evaluation-A signaling-humat-energy-independence-evaluation-A energy-independence-importance signaling-humat-energy-independence-importance
+    let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A signaling-humat-environmental-quality-evaluation-A environmental-quality-importance signaling-humat-environmental-quality-importance
+    let similarity-economic-sustainability-importance-A Need-Similarity economic-sustainability-evaluation-A signaling-humat-economic-sustainability-evaluation-A economic-sustainability-importance signaling-humat-economic-sustainability-importance
+    let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A signaling-humat-prestige-evaluation-A prestige-importance signaling-humat-prestige-importance
+    let similarity-participation-importance-A Need-Similarity participation-evaluation-A signaling-humat-participation-evaluation-A participation-importance signaling-humat-participation-importance
+    
+    ;calculate similarities for alternative B
+    let similarity-energy-independence-importance-B Need-Similarity energy-independence-evaluation-B signaling-humat-energy-independence-evaluation-B energy-independence-importance signaling-humat-energy-independence-importance
+    let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B signaling-humat-environmental-quality-evaluation-B environmental-quality-importance signaling-humat-environmental-quality-importance
+    let similarity-economic-sustainability-importance-B Need-Similarity economic-sustainability-evaluation-B signaling-humat-economic-sustainability-evaluation-B economic-sustainability-importance signaling-humat-economic-sustainability-importance
+    let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B signaling-humat-prestige-evaluation-B prestige-importance signaling-humat-prestige-importance
+    let similarity-participation-importance-B Need-Similarity participation-evaluation-B signaling-humat-participation-evaluation-B participation-importance signaling-humat-participation-importance
+    
+    ;get relative-aspiration
+    ;search for the reverse link
+    let link-list sort my-out-links
+    let reverse-link 0
+    foreach link-list [link-in-list -> if [who] of [other-end] of link-in-list = [who] of myself [set reverse-link link-in-list]]
+    let rel-aspiration [trust] of reverse-link
+    
+    ; persuasion is a multiplication of need-similarity and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+    let persuasion-energy-independence-A (similarity-energy-independence-importance-A * rel-aspiration) 
+    let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+    let persuasion-economic-sustainability-A (similarity-economic-sustainability-importance-A * rel-aspiration) 
+    let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+    let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+    
+    
+    let persuasion-energy-independence-B (similarity-energy-independence-importance-B * rel-aspiration) 
+    let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+    let persuasion-economic-sustainability-B (similarity-economic-sustainability-importance-B * rel-aspiration) 
+    let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+    let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+    
+    ; seting new experiential and values satisfaction
+    set energy-independence-satisfaction-A New-Need-Satisfaction energy-independence-satisfaction-A persuasion-energy-independence-A [energy-independence-satisfaction-A] of myself
+    set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of myself
+    set economic-sustainability-satisfaction-A New-Need-Satisfaction economic-sustainability-satisfaction-A persuasion-economic-sustainability-A [economic-sustainability-satisfaction-A] of myself
+    set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of myself
+    set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of myself
+    
+    
+    set energy-independence-satisfaction-B New-Need-Satisfaction energy-independence-satisfaction-B persuasion-energy-independence-B [energy-independence-satisfaction-B] of myself
+    set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of myself
+    set economic-sustainability-satisfaction-B New-Need-Satisfaction economic-sustainability-satisfaction-B persuasion-economic-sustainability-B [economic-sustainability-satisfaction-B] of myself
+    set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of myself
+    set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of myself
+    
+    ;update behaviour decision
+    Update-Evaluations
+    Update-Dissonances
+    Choose-Behaviour
+    Update-Evaluations
+    Update-Dissonances
+    
+    ;update link same-ba=?
+    ask reverse-link[
+      ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+    ]
+    
+    ;update link gullibility and same-ba?
+    ask First [sorted-link-list] of myself [
+      set gullibility persuasion-energy-independence-A + persuasion-environmental-quality-A + persuasion-economic-sustainability-A + persuasion-prestige-A + persuasion-participation-A + persuasion-energy-independence-B + persuasion-environmental-quality-B + persuasion-economic-sustainability-B + persuasion-prestige-B + persuasion-participation-B  
+      ;update link same-ba?
+      ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+      ;updated inquired? link
+      set signaled? 1
+    ]
+  ]
+  ;update dissonances of signaling humat
+  Update-Evaluations
+  Update-Dissonances
+  Choose-Behaviour
+  Update-Evaluations
+  Update-Dissonances
+end
+
+;<summary>.
+;The citizen ask for the opinion of the other agent in his network, prioritizing those with whom he does share an opinion
+;This influence depends on the ability to influence of the other agent, the stubbornness of this agent and the agents similarity of needs.
+;</summary>
+to Inquire-Comm
+  let sorted-link-list Sort-List-Inquiring my-out-links
+  ;select the first humat of the sorted list
+  let inquired-humat [other-end] of First sorted-link-list
+  set inquiring 1
+  ;get needs from inquired humat
+  let inquired-humat-energy-independence-evaluation-A [energy-independence-evaluation-A] of inquired-humat
+  let inquired-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of inquired-humat
+  let inquired-humat-economic-sustainability-evaluation-A [economic-sustainability-evaluation-A] of inquired-humat
+  let inquired-humat-prestige-evaluation-A [prestige-evaluation-A] of inquired-humat
+  let inquired-humat-participation-evaluation-A [participation-evaluation-A] of inquired-humat
+  
+  let inquired-humat-energy-independence-evaluation-B [energy-independence-evaluation-B] of inquired-humat
+  let inquired-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of inquired-humat
+  let inquired-humat-economic-sustainability-evaluation-B [economic-sustainability-evaluation-B] of inquired-humat
+  let inquired-humat-prestige-evaluation-B [prestige-evaluation-B] of inquired-humat
+  let inquired-humat-participation-evaluation-B [participation-evaluation-B] of inquired-humat
+  
+  ;get importances from inquired humat
+  let inquired-humat-energy-independence-importance [energy-independence-importance] of inquired-humat
+  let inquired-humat-environmental-quality-importance [environmental-quality-importance] of inquired-humat
+  let inquired-humat-economic-sustainability-importance [economic-sustainability-importance] of inquired-humat
+  let inquired-humat-prestige-importance [prestige-importance] of inquired-humat
+  let inquired-humat-participation-importance [participation-importance] of inquired-humat
+  
+  ;calculate similarities for alternative A
+  let similarity-energy-independence-importance-A Need-Similarity energy-independence-evaluation-A inquired-humat-energy-independence-evaluation-A energy-independence-importance inquired-humat-energy-independence-importance
+  let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A inquired-humat-environmental-quality-evaluation-A environmental-quality-importance inquired-humat-environmental-quality-importance
+  let similarity-economic-sustainability-importance-A Need-Similarity economic-sustainability-evaluation-A inquired-humat-economic-sustainability-evaluation-A economic-sustainability-importance inquired-humat-economic-sustainability-importance
+  let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A inquired-humat-prestige-evaluation-A prestige-importance inquired-humat-prestige-importance
+  let similarity-participation-importance-A Need-Similarity participation-evaluation-A inquired-humat-participation-evaluation-A participation-importance inquired-humat-participation-importance
+  
+  ;calculate similarities for alternative B
+  let similarity-energy-independence-importance-B Need-Similarity energy-independence-evaluation-B inquired-humat-energy-independence-evaluation-B energy-independence-importance inquired-humat-energy-independence-importance
+  let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B inquired-humat-environmental-quality-evaluation-B environmental-quality-importance inquired-humat-environmental-quality-importance
+  let similarity-economic-sustainability-importance-B Need-Similarity economic-sustainability-evaluation-B inquired-humat-economic-sustainability-evaluation-B economic-sustainability-importance inquired-humat-economic-sustainability-importance
+  let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B inquired-humat-prestige-evaluation-B prestige-importance inquired-humat-prestige-importance
+  let similarity-participation-importance-B Need-Similarity participation-evaluation-B inquired-humat-participation-evaluation-B participation-importance inquired-humat-participation-importance
+  
+  ;get relative-aspiration
+  let rel-aspiration [trust] of First sorted-link-list
+  
+  ;calculate persuasions
+  let persuasion-energy-independence-A (similarity-energy-independence-importance-A * rel-aspiration) 
+  let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+  let persuasion-economic-sustainability-A (similarity-economic-sustainability-importance-A * rel-aspiration) 
+  let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+  let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+  
+  
+  let persuasion-energy-independence-B (similarity-energy-independence-importance-B * rel-aspiration) 
+  let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+  let persuasion-economic-sustainability-B (similarity-economic-sustainability-importance-B * rel-aspiration) 
+  let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+  let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+  
+  ;update satisfactions
+  set energy-independence-satisfaction-A New-Need-Satisfaction energy-independence-satisfaction-A persuasion-energy-independence-A [energy-independence-satisfaction-A] of inquired-humat
+  set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of inquired-humat
+  set economic-sustainability-satisfaction-A New-Need-Satisfaction economic-sustainability-satisfaction-A persuasion-economic-sustainability-A [economic-sustainability-satisfaction-A] of inquired-humat
+  set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of inquired-humat
+  set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of inquired-humat
+  
+  
+  set energy-independence-satisfaction-B New-Need-Satisfaction energy-independence-satisfaction-B persuasion-energy-independence-B [energy-independence-satisfaction-B] of inquired-humat
+  set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of inquired-humat
+  set economic-sustainability-satisfaction-B New-Need-Satisfaction economic-sustainability-satisfaction-B persuasion-economic-sustainability-B [economic-sustainability-satisfaction-B] of inquired-humat
+  set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of inquired-humat
+  set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of inquired-humat
+  
+  ;update evaluations; dissonances; and behaviour
+  Update-Evaluations
+  Update-Dissonances
+  Choose-Behaviour
+  ;after choose behavior update social and dissonances values again.
+  Update-Evaluations
+  Update-Dissonances
+  
+  
+  ;set link persuasion as sum of all persuasions
+  ask First sorted-link-list [
+    set persuasion persuasion-energy-independence-A + persuasion-environmental-quality-A + persuasion-economic-sustainability-A + persuasion-prestige-A + persuasion-participation-A + persuasion-energy-independence-B + persuasion-environmental-quality-B + persuasion-economic-sustainability-B + persuasion-prestige-B + persuasion-participation-B  
+    ;update link same-ba?
+    ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+    ;updated inquired? link
+    set inquired? 1
+  ]
+  ;update the inquired humat link for same-ba
+  ask inquired-humat[
+    foreach sort my-out-links [ dir-link -> if [who] of [other-end] of dir-link = [who] of myself [ask dir-link [ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]]]]
+  ]
+end
+
+to Random-Conversations
+  let min-prob 0.05
+  let prob min-prob
+  if (random-float 1) <= prob [
+    set random-conv 1
+    let random-link one-of my-out-links
+    ;select the first humat of the sorted list
+    let signaled-humat [other-end] of random-link
+    ask signaled-humat [
+      ;get needs evaluations from signaling humat
+      let signaling-humat-energy-independence-evaluation-A [energy-independence-evaluation-A] of myself
+      let signaling-humat-environmental-quality-evaluation-A [environmental-quality-evaluation-A] of myself
+      let signaling-humat-economic-sustainability-evaluation-A [economic-sustainability-evaluation-A] of myself
+      let signaling-humat-prestige-evaluation-A [prestige-evaluation-A] of myself
+      let signaling-humat-participation-evaluation-A [participation-evaluation-A] of myself
+      
+      let signaling-humat-energy-independence-evaluation-B [energy-independence-evaluation-B] of myself
+      let signaling-humat-environmental-quality-evaluation-B [environmental-quality-evaluation-B] of myself
+      let signaling-humat-economic-sustainability-evaluation-B [economic-sustainability-evaluation-B] of myself
+      let signaling-humat-prestige-evaluation-B [prestige-evaluation-B] of myself
+      let signaling-humat-participation-evaluation-B [participation-evaluation-B] of myself
+      
+      ;get importances from signaling humat
+      let signaling-humat-energy-independence-importance [energy-independence-importance] of myself
+      let signaling-humat-environmental-quality-importance [environmental-quality-importance] of myself
+      let signaling-humat-economic-sustainability-importance [economic-sustainability-importance] of myself
+      let signaling-humat-prestige-importance [prestige-importance] of myself
+      let signaling-humat-participation-importance [participation-importance] of myself
+      
+      ;calculate similarities for alternative A
+      let similarity-energy-independence-importance-A Need-Similarity energy-independence-evaluation-A signaling-humat-energy-independence-evaluation-A energy-independence-importance signaling-humat-energy-independence-importance
+      let similarity-environmental-quality-importance-A Need-Similarity environmental-quality-evaluation-A signaling-humat-environmental-quality-evaluation-A environmental-quality-importance signaling-humat-environmental-quality-importance
+      let similarity-economic-sustainability-importance-A Need-Similarity economic-sustainability-evaluation-A signaling-humat-economic-sustainability-evaluation-A economic-sustainability-importance signaling-humat-economic-sustainability-importance
+      let similarity-prestige-importance-A Need-Similarity prestige-evaluation-A signaling-humat-prestige-evaluation-A prestige-importance signaling-humat-prestige-importance
+      let similarity-participation-importance-A Need-Similarity participation-evaluation-A signaling-humat-participation-evaluation-A participation-importance signaling-humat-participation-importance
+      
+      ;calculate similarities for alternative B
+      let similarity-energy-independence-importance-B Need-Similarity energy-independence-evaluation-B signaling-humat-energy-independence-evaluation-B energy-independence-importance signaling-humat-energy-independence-importance
+      let similarity-environmental-quality-importance-B Need-Similarity environmental-quality-evaluation-B signaling-humat-environmental-quality-evaluation-B environmental-quality-importance signaling-humat-environmental-quality-importance
+      let similarity-economic-sustainability-importance-B Need-Similarity economic-sustainability-evaluation-B signaling-humat-economic-sustainability-evaluation-B economic-sustainability-importance signaling-humat-economic-sustainability-importance
+      let similarity-prestige-importance-B Need-Similarity prestige-evaluation-B signaling-humat-prestige-evaluation-B prestige-importance signaling-humat-prestige-importance
+      let similarity-participation-importance-B Need-Similarity participation-evaluation-B signaling-humat-participation-evaluation-B participation-importance signaling-humat-participation-importance
+      
+      ;get relative-aspiration
+      ;search for the reverse link
+      let link-list sort my-out-links
+      let reverse-link 0
+      foreach link-list [link-in-list -> if [who] of [other-end] of link-in-list = [who] of myself [set reverse-link link-in-list]]
+      let rel-aspiration [trust] of reverse-link
+      
+      ; persuasion is a multiplication of need-similarity and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+      let persuasion-energy-independence-A (similarity-energy-independence-importance-A * rel-aspiration) 
+      let persuasion-environmental-quality-A (similarity-environmental-quality-importance-A * rel-aspiration)
+      let persuasion-economic-sustainability-A (similarity-economic-sustainability-importance-A * rel-aspiration) 
+      let persuasion-prestige-A (similarity-prestige-importance-A * rel-aspiration) 
+      let persuasion-participation-A (similarity-participation-importance-A * rel-aspiration) 
+      
+      
+      let persuasion-energy-independence-B (similarity-energy-independence-importance-B * rel-aspiration) 
+      let persuasion-environmental-quality-B (similarity-environmental-quality-importance-B * rel-aspiration)
+      let persuasion-economic-sustainability-B (similarity-economic-sustainability-importance-B * rel-aspiration) 
+      let persuasion-prestige-B (similarity-prestige-importance-B * rel-aspiration) 
+      let persuasion-participation-B (similarity-participation-importance-B * rel-aspiration) 
+      
+      ; seting new experiential and values satisfaction
+      set energy-independence-satisfaction-A New-Need-Satisfaction energy-independence-satisfaction-A persuasion-energy-independence-A [energy-independence-satisfaction-A] of myself
+      set environmental-quality-satisfaction-A New-Need-Satisfaction environmental-quality-satisfaction-A persuasion-environmental-quality-A [environmental-quality-satisfaction-A] of myself
+      set economic-sustainability-satisfaction-A New-Need-Satisfaction economic-sustainability-satisfaction-A persuasion-economic-sustainability-A [economic-sustainability-satisfaction-A] of myself
+      set prestige-satisfaction-A New-Need-Satisfaction prestige-satisfaction-A persuasion-prestige-A [prestige-satisfaction-A] of myself
+      set participation-satisfaction-A New-Need-Satisfaction participation-satisfaction-A persuasion-participation-A [participation-satisfaction-A] of myself
+      
+      
+      set energy-independence-satisfaction-B New-Need-Satisfaction energy-independence-satisfaction-B persuasion-energy-independence-B [energy-independence-satisfaction-B] of myself
+      set environmental-quality-satisfaction-B New-Need-Satisfaction environmental-quality-satisfaction-B persuasion-environmental-quality-B [environmental-quality-satisfaction-B] of myself
+      set economic-sustainability-satisfaction-B New-Need-Satisfaction economic-sustainability-satisfaction-B persuasion-economic-sustainability-B [economic-sustainability-satisfaction-B] of myself
+      set prestige-satisfaction-B New-Need-Satisfaction prestige-satisfaction-B persuasion-prestige-B [prestige-satisfaction-B] of myself
+      set participation-satisfaction-B New-Need-Satisfaction participation-satisfaction-B persuasion-participation-B [participation-satisfaction-B] of myself
+      
+      ;update behaviour decision
+      Update-Evaluations
+      Update-Dissonances
+      Choose-Behaviour
+      Update-Evaluations
+      Update-Dissonances
+      
+      ;update link same-ba=?
+      ask reverse-link[
+        ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+      ]
+    ]
+    ;update link same-ba?
+    ask random-link [
+      ;update link same-ba?
+      ifelse [behavior] of other-end = [behavior] of myself [set same-ba? 1][set same-ba? 0]
+    ]
+
+    ;update dissonances of signaling humat
+    Update-Evaluations
+    Update-Dissonances
+    Choose-Behaviour
+    Update-Evaluations
+    Update-Dissonances
+    
+    
+  ]  
+end

@@ -1,0 +1,90 @@
+;<summary>
+; reports a score drawn from a beta distribution with two shape parapeters: alpha and beta
+; values for a population of 100
+; #alpha = 4, #beta = 4 - > symmetric with a mean close to 0
+;</summary>
+to-report Random-Beta [ #alpha #beta ]
+  let Xa random-gamma #alpha 1
+  let Xb random-gamma #beta 1
+  let result Xa / (Xa + Xb)
+  report result
+
+end
+
+to-report Normalized-Min-Max [norm-variable min-old max-old min-new max-new]
+  let norm min-new + (((norm-variable - min-old) * (max-new - min-new)) / (max-old - min-old))
+  report norm
+end
+
+;<summary>
+;reports the current month number based on the current tick
+;</summary>
+to-report Get-Month
+  let tmp round (remainder (ticks / 2)  12)
+  if tmp = 0 [set tmp  12]
+  report tmp
+end
+
+;<summary>
+;reports the current year  based on the current tick and the initial-year
+;</summary>
+to-report Get-Year
+  let tmp 0
+  ifelse month = 12 [
+    set tmp floor ((ticks - 1) / 24)
+  
+  ][
+    set tmp floor (ticks / 24)
+  ]
+  report initial-year + tmp
+end
+
+to-report Random-Normal-Trunc [mid dev mmin mmax]
+  ; creating a trunc normal function to be used for tuncating the normal distribution between mmin and mmax values
+  ; good for now, but the goeal would be to get to the normal from beta (using gamma as a start)
+  let result random-normal mid dev
+  if result < mmin or result > mmax
+  [report Random-Normal-Trunc mid dev mmin mmax]
+  report result
+end
+
+to draw-circle
+  ;clear-drawing
+  create-turtles 1
+    [ set color gray - 3
+      set size 2 * social-reach
+      set xcor [xcor] of humat 1956
+      set ycor [ycor] of humat 1956
+      set shape "circle"
+      ;stamp
+      ;die 
+  ]
+  ask humat 1956 [ask my-out-adjacents [show-link]]
+end
+
+
+to-report Split [value]
+  let current-position  0
+  let last-trim  0
+  let tmp-substring ""
+  let trimed []
+  while [current-position != length value] [
+    if item current-position value = ","[
+      set tmp-substring substring value last-trim current-position
+      set last-trim current-position + 1
+      set trimed lput tmp-substring trimed
+    ]
+    set current-position current-position + 1
+  ]
+  
+  if last-trim = 0 [
+    set trimed lput value trimed
+    set last-trim length value
+  ]
+  
+  if current-position - last-trim > 2 [
+    set trimed lput substring value last-trim current-position trimed
+  ]
+  show trimed
+  report trimed
+end

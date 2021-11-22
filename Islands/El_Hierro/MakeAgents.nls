@@ -1,0 +1,488 @@
+extensions [ csv ]
+
+
+;<summary>
+;create the population of the model using information from the database
+;</summary>
+to Make-Sections-Population
+  file-open "/BasesDeDatos/RealPopulation.csv"
+  ;ignore first row
+  let row (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    set row (csv:from-row file-read-line ";")
+    Make-Real-Population row
+  ]
+  file-close
+  ask humats [hide-turtle]
+  file-open population-csv
+  ;ignore first row
+  set row (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    set row (csv:from-row file-read-line ";")
+    Make-Simulated-Population row
+  ]
+  file-close
+  
+end
+
+
+to Make-Real-Population [citizen-data]
+  ; Set  importances
+  create-humats 1 [
+    set energy-independence-importance ((item 12 citizen-data) + (item 13 citizen-data) +  (item 24 citizen-data) +  (item 26 citizen-data)) / 4
+    set energy-independence-importance Normalized-Min-Max  energy-independence-importance 0 6 0 norm-max
+    
+    set environmental-quality-importance ((item 14 citizen-data) + (item 21 citizen-data) +  (item 23 citizen-data)) / 3
+    set environmental-quality-importance Normalized-Min-Max environmental-quality-importance 0 6 0 norm-max
+
+    set economic-sustainability-importance ((item 11 citizen-data) + (item 22 citizen-data) +  (item 25 citizen-data)) / 3
+    set economic-sustainability-importance Normalized-Min-Max  economic-sustainability-importance 0 6 0 1
+
+    
+    
+    set prestige-importance ((item 15 citizen-data) + (item 16 citizen-data)) / 2
+    set prestige-importance Normalized-Min-Max  prestige-importance 0 6 0 1
+
+    
+    set participation-importance ((item 17 citizen-data) + (item 18 citizen-data) +  (item 19 citizen-data) +  (item 20 citizen-data)) / 4
+    set participation-importance  Normalized-Min-Max  participation-importance  0 6 0 norm-max
+
+    
+    set social-importance random-float 1
+    
+    ; Set initial satisfactions for all BA ; excluding social dimension
+    ;set wellness-satisfaction-A Normalized-Min-Max Random-Beta 4 4 0 1 -1 1
+    set energy-independence-satisfaction-A (item 33 citizen-data) - TEMPORAL-DesvioCurvaPos
+    set energy-independence-satisfaction-A   Normalized-Min-Max  energy-independence-satisfaction-A   0 6 -1 1
+    
+    set environmental-quality-satisfaction-A (((item 27 citizen-data) + (item 28 citizen-data) +  (item 29 citizen-data) +  (item 30 citizen-data) +  (item 32 citizen-data)) / 5) - TEMPORAL-DesvioCurvaPos
+    set environmental-quality-satisfaction-A  Normalized-Min-Max  environmental-quality-satisfaction-A  0 6 -1 1
+    
+    set economic-sustainability-satisfaction-A (((item 34 citizen-data) + (item 36 citizen-data) +  (item 38 citizen-data) +  (item 40 citizen-data)) / 4) - TEMPORAL-DesvioCurvaPos
+    set economic-sustainability-satisfaction-A  Normalized-Min-Max  economic-sustainability-satisfaction-A 0 6 -1 1
+    
+    set prestige-satisfaction-A (((item 31 citizen-data) + (item 35 citizen-data) +  (item 37 citizen-data) +  (item 39 citizen-data) +  (item 41 citizen-data)) / 5) - TEMPORAL-DesvioCurvaPos
+    set prestige-satisfaction-A  Normalized-Min-Max  prestige-satisfaction-A  0 6 -1 1
+    
+    set participation-satisfaction-A (((item 42 citizen-data) + (item 43 citizen-data)) / 2) - TEMPORAL-DesvioCurvaPos
+    set participation-satisfaction-A  Normalized-Min-Max  participation-satisfaction-A  0 6 -1 1
+    
+    
+    set energy-independence-satisfaction-B (0 - energy-independence-satisfaction-A) +  TEMPORAL-DesvioCurva
+    if energy-independence-satisfaction-B > 1 [ set energy-independence-satisfaction-B  1]
+    if energy-independence-satisfaction-B < -1 [ set energy-independence-satisfaction-B  -1]
+    set environmental-quality-satisfaction-B (0 - environmental-quality-satisfaction-A) + TEMPORAL-DesvioCurva
+    if environmental-quality-satisfaction-B > 1 [ set environmental-quality-satisfaction-B  1]
+    if environmental-quality-satisfaction-B < -1 [ set environmental-quality-satisfaction-B  -1]
+    set economic-sustainability-satisfaction-B (0 - economic-sustainability-satisfaction-A) + TEMPORAL-DesvioCurva
+    if economic-sustainability-satisfaction-B > 1 [ set economic-sustainability-satisfaction-B  1]
+    if economic-sustainability-satisfaction-B < -1 [ set economic-sustainability-satisfaction-B  -1]
+    set prestige-satisfaction-B (0 - prestige-satisfaction-A ) + TEMPORAL-DesvioCurva
+    if prestige-satisfaction-B  > 1 [ set prestige-satisfaction-B   1]
+    if prestige-satisfaction-B  < -1 [ set prestige-satisfaction-B   -1]
+    set participation-satisfaction-B (0 - participation-satisfaction-A) + TEMPORAL-DesvioCurva
+    if participation-satisfaction-B > 1 [ set participation-satisfaction-B  1]
+    if participation-satisfaction-B < -1 [ set participation-satisfaction-B  -1]
+    
+    ;set influence parameters
+    set friends-trust Normalized-Min-Max  (item 7 citizen-data) 0 6 0 1
+    set adjacents-trust Normalized-Min-Max  (item 6 citizen-data) 0 6 0 1
+    set city-council-trust Normalized-Min-Max  (item 5 citizen-data) 0 6 0 1
+    set local-media-trust Normalized-Min-Max  (item 10 citizen-data) 0 6 0 1
+    set other-associations-trust Normalized-Min-Max  (item 8 citizen-data) 0 6 0 1
+    set gorona-viento-trust Normalized-Min-Max  (item 9 citizen-data) 0 6 0 1
+    set political-opposition-trust Normalized-Min-Max  (1 - city-council-trust) 0 1 0 1
+    
+    ;Set evaluations for all BAs
+    set energy-independence-evaluation-A energy-independence-importance * energy-independence-satisfaction-A
+    set environmental-quality-evaluation-A environmental-quality-importance * environmental-quality-satisfaction-A
+    set economic-sustainability-evaluation-A economic-sustainability-importance * economic-sustainability-satisfaction-A
+    set prestige-evaluation-A prestige-importance * prestige-satisfaction-A
+    set participation-evaluation-A participation-importance * participation-satisfaction-A
+    
+    set energy-independence-evaluation-B energy-independence-importance * energy-independence-satisfaction-B
+    set environmental-quality-evaluation-B environmental-quality-importance * environmental-quality-satisfaction-B
+    set economic-sustainability-evaluation-B economic-sustainability-importance * economic-sustainability-satisfaction-B
+    set prestige-evaluation-B prestige-importance * prestige-satisfaction-B
+    set participation-evaluation-B participation-importance * participation-satisfaction-B
+    
+    ;global satisfaction for all behavioural alternatives
+    set satisfaction-A ((energy-independence-evaluation-A + environmental-quality-evaluation-A + economic-sustainability-evaluation-A + prestige-evaluation-A + participation-evaluation-A) / 5)
+    set satisfaction-B ((energy-independence-evaluation-B + environmental-quality-evaluation-B + economic-sustainability-evaluation-B + prestige-evaluation-B + participation-evaluation-B) / 5)
+    
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+    
+    ;social network values
+    set age (item 2 citizen-data)
+    ifelse (item 3 citizen-data) = 1 [set gender "male"] [set gender "female"]
+    set education-level (item 45 citizen-data)
+    set economic-activity (item 44 citizen-data)
+    set simulated  0
+    set bussiness-owner (item 1 citizen-data)
+    set homeowner (item 0 citizen-data)
+    set numFriends 5
+    ifelse (item 46 citizen-data) =  "EL PINAR" [
+      set section "3890101001"
+    ][
+      ifelse (item 46 citizen-data) = "FRONTERA" [
+        set section one-of [ "3801301001" "3801301002" ] 
+      ] [
+        set section one-of ["3804801001" "3804801002" "3804801004"]  
+      ]
+    ]
+  ] 
+end
+
+to Make-Simulated-Population [sectionDem]
+  let cusec  remove-item 0 (item 0 sectionDem)
+  let max-citizen-section  (item 1 sectionDem)
+  let humats-section humats with [section = cusec]
+  set max-citizen-section  max-citizen-section - count(humats-section)
+  
+  ;create male over  65
+  let male-over-65 (item 2 sectionDem)
+  
+  create-humats male-over-65 [
+    set gender  "male"
+    set age  random 36 + 65
+    set simulated 1
+    set section cusec
+    ;
+    Education-Level-Distribution (item 3 sectionDem) (item 4 sectionDem)
+    Economic-Activity-Distribution (item 6 sectionDem) (item 7 sectionDem) (item 8 sectionDem)
+    
+    ;reference humat
+    let copy  Population-Group education-level economic-activity gender
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+    ;
+    ; 0 employed ,  0  umemployed, 1 inactive, 0  student 
+    
+  ]
+  
+  ;create female over  65
+  let female-over-65 (item 10 sectionDem)
+  
+  create-humats female-over-65 [
+    set gender  "female"
+    set age  random 36 + 65
+    set simulated 1
+    set section cusec
+    ;
+    Education-Level-Distribution (item 11 sectionDem) (item 12 sectionDem)
+    Economic-Activity-Distribution (item 14 sectionDem) (item 15 sectionDem) (item 16 sectionDem)
+    
+    ;reference humat
+    let copy  Population-Group education-level economic-activity gender
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+    ;
+    ; 0 employed ,  0  umemployed, 1 inactive, 0  student 
+    
+  ]
+  
+  ;create male under  65
+  let male-under-65 (item 18 sectionDem)
+  create-humats male-under-65 [
+    set gender  "male"
+    set age  random 46 + 18
+    set simulated 1
+    set section cusec
+    ;
+    Education-Level-Distribution (item 19 sectionDem) (item 20 sectionDem)
+    Economic-Activity-Distribution (item 22 sectionDem) (item 23 sectionDem) (item 24 sectionDem)
+    
+    ;reference humat
+    let copy  Population-Group education-level economic-activity gender
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+  ]
+  
+  ;create male under  65
+  let female-under-65 (item 26 sectionDem)
+  create-humats female-under-65 [
+    set gender  "female"
+    set age  random 46 + 18
+    set simulated 1
+    set section cusec
+    ;
+    Education-Level-Distribution (item 27 sectionDem) (item 28 sectionDem)
+    Economic-Activity-Distribution (item 30 sectionDem) (item 31 sectionDem) (item 32 sectionDem)
+    
+    ;reference humat
+    let copy  Population-Group education-level economic-activity gender
+    ;copy the reference humat
+    Copy-Needs copy
+    ;choose the behaviour with the highest satisfaction
+    set satisfaction  max (list satisfaction-A satisfaction-B)
+    ;; green -> A || red -> B
+    ifelse satisfaction = satisfaction-A [set behavior "A" set color green] [set behavior "B" set color red]
+    
+    ;set dissonance threshold
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1
+  ]
+  
+end
+
+to Make-Critical-Node [name node-scope loc trust-type-string]
+  create-critical-nodes 1[
+    set node-type name
+    set scope round(node-scope / 100 * (count humats))
+    set location remove-item 0 loc
+    set trust-type trust-type-string
+  ]
+end
+;<summary>
+;create the critical nodes
+;</summary>
+to Make-Critical-Nodes
+  ;read the critical node csv and make the critical node turtles
+  file-open critical-nodes-config
+  ;ignore first row
+  let row (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    set row (csv:from-row file-read-line ";")
+    Make-Critical-Node item 0 row item 1 row (word item 2 row) item 3 row
+    ]
+  file-close
+  
+  ;set, place, color, shape and size of critical nodes
+  ask critical-nodes[
+    set shape "building institution"
+    let loc-patches patches with [ district-id = [location] of myself]
+    move-to one-of loc-patches
+    set size 2
+    set color white
+  ]
+end
+
+;<summary>
+;Place the citizen in a patch of his section, prioritizing the empty patches
+;</summary>
+to Place-Citizen
+  ask humats [
+    let empty-patches patches with [ not any? turtles-here and district-id = [section] of myself]
+    if not any? empty-patches [
+      set empty-patches patches with [ district-id = [section] of myself]
+    ]
+    move-to one-of empty-patches
+  ]
+end
+
+;<summary>
+;create the strategy-manager
+;</summary>
+to Make-Strategy-Manager
+  create-strategy-managers 1
+  ask strategy-managers[
+    hide-turtle
+    set strategies-list []
+    ;read the strategy file
+    ifelse scenario-1 [
+      file-open "scenario1.csv"
+    ][
+      ;real timeline strategies
+      file-open strategies-table
+    ]
+    
+    ;ignore first row
+    let row (csv:from-row file-read-line ";")
+    while [ not file-at-end? ] [
+      set row (csv:from-row file-read-line ";")
+      ;map a strategy file row to a more simple representation
+      let focus-list Split item 9 row
+      set strategies-list Make-Strategy-List row focus-list
+    ]
+    file-close
+    show strategies-list
+  ]
+end
+
+;<summary>
+;Map a strategy row in a mensual strategy format
+;row, is the row of the strategy file, which contains the parameters of a critical node strategy
+;</summary>
+to-report Make-Strategy-List[row focus-list]
+  let starting-year item 3 row
+  let ending-year item 5 row
+  let months 0
+  let years 0
+
+  ifelse starting-year  > ending-year[
+    print("The strategy table is wrong: ending year must be equal to or greater than starting year")
+  ][
+    ;years that the strategy lasts
+    set years ending-year - starting-year
+  ]
+  let ending-month item 4 row + (years * 12) ;ending month is ending-month + years in months
+  ;strategy duration in months
+  let duration ending-month - item 2 row ;ending-month - starting-month
+  
+  ;current-mont starts in the starting-month
+  let current-month item 2 row
+  ;new strategy row
+  let newrow []
+  ;make a new strategy row for every month of the original strategy
+  while [current-month <= ending-month][
+    let new-starting-year starting-year + floor (current-month / 12)
+    let new-starting-month (current-month mod 12)
+    ;fix problem with the 12 mod 12 situation
+    if new-starting-month = 0 [
+      ;if new-stating-month = 0 in fact is the 12º month
+      set new-starting-month 12
+      ;and there is not new year yet!
+      set new-starting-year new-starting-year - 1
+    ]
+    ;make the new row with the original values and the new stating month/year
+    set newrow (list (item 0 row) (item 1 row) (new-starting-month) (new-starting-year) (item 6 row)  (item 7 row) (item 8 row) focus-list)
+    ;add the new row to the list  critical-node-name behavior starting-month starting-year frecuency reach secondary-critical-node-name focus
+    set strategies-list lput newrow strategies-list
+    ;increment loop
+    set current-month current-month + 1
+  ]
+  report strategies-list
+end
+
+to Education-Level-Distribution [low-prob medium-prob ]
+  ;education level based on demographic distribution
+    let rnumber  random-float 1
+    ifelse rnumber <=  low-prob[
+      set education-level  "low"
+    ][
+      ifelse rnumber <= (low-prob + medium-prob)[
+        set education-level  "medium"
+      ][
+        set education-level  "high"
+      ]
+    ]
+end
+to Economic-Activity-Distribution [prob-employed prob-umemployed prob-inactive]
+  ;economic activity based on demographic distribution
+  let rnumber  random-float 1
+  ifelse rnumber <=  prob-employed[
+    set economic-activity  "employed"
+  ][
+    ifelse rnumber <= (prob-employed + prob-umemployed) [
+      set economic-activity  "unemployed"
+    ][
+      ifelse rnumber <= (prob-employed + prob-umemployed + prob-inactive )[
+        set economic-activity  "inactive"
+      ]
+      [
+        set economic-activity  "student"
+      ]
+    ]
+  ] 
+end
+
+to-report Population-Group [education activity gender-sim]
+
+  ;left branch (node education level)
+  ifelse education = "low"  [
+    ;right branch employed?
+    ifelse  activity = "employed"  [
+      report one-of humats with [(education-level = "low") and (economic-activity = "employed")]
+    ][
+      ifelse activity = "unemployed" [
+        report one-of humats with [(education-level = "low") and (economic-activity = "unemployed")]
+      ]
+      [
+        report one-of humats with [(education-level = "low") and ((economic-activity = "inactive") or (economic-activity = "student"))]
+      ]
+    ]
+  ]
+  [
+    ;right branc node education lvl 2
+    ifelse education = "high"[
+      report one-of humats with [(education-level = "high")]
+    ][
+      ;right branch node gender
+      ifelse gender-sim = "female" [
+        report one-of humats with [(education-level = "medium") and (gender = "female")]
+      ][
+        ;left branch node gender
+        report one-of humats with [(education-level = "medium") and (gender = "male")]
+      ]
+    ]
+  ]
+end
+
+to Copy-Needs [copy]
+  ;importances
+  set energy-independence-importance [energy-independence-importance] of copy
+  set environmental-quality-importance [environmental-quality-importance] of copy
+  set economic-sustainability-importance [economic-sustainability-importance ] of copy
+  set prestige-importance [prestige-importance] of copy
+  set participation-importance [participation-importance] of copy
+  set social-importance [social-importance] of copy
+  
+  ;satisfactions
+  set energy-independence-satisfaction-A [energy-independence-satisfaction-A] of copy
+  set environmental-quality-satisfaction-A [environmental-quality-satisfaction-A] of copy
+  set economic-sustainability-satisfaction-A [economic-sustainability-satisfaction-A] of copy
+  set prestige-satisfaction-A  [prestige-satisfaction-A ] of copy
+  set participation-satisfaction-A [participation-satisfaction-A] of copy
+  
+  set energy-independence-satisfaction-B [energy-independence-satisfaction-B] of copy
+  set environmental-quality-satisfaction-B [environmental-quality-satisfaction-B] of copy
+  set economic-sustainability-satisfaction-B [economic-sustainability-satisfaction-B] of copy
+  set prestige-satisfaction-B  [prestige-satisfaction-B ] of copy
+  set participation-satisfaction-B [participation-satisfaction-B] of copy
+  
+  ;influence parameters
+  set friends-trust [friends-trust] of copy
+  set adjacents-trust [adjacents-trust] of copy
+  
+  set city-council-trust [city-council-trust] of copy
+  set local-media-trust [local-media-trust] of copy
+  set gorona-viento-trust [gorona-viento-trust] of copy
+  set other-associations-trust [other-associations-trust] of copy
+  set political-opposition-trust [political-opposition-trust] of copy
+
+  
+  ;evaluations
+  set energy-independence-evaluation-A [energy-independence-evaluation-A] of copy
+  set environmental-quality-evaluation-A [environmental-quality-evaluation-A] of copy
+  set economic-sustainability-evaluation-A [economic-sustainability-evaluation-A ] of copy
+  set prestige-evaluation-A [prestige-evaluation-A] of copy
+  set participation-evaluation-A [participation-evaluation-A] of copy
+  
+  set energy-independence-evaluation-B [energy-independence-evaluation-B] of copy
+  set environmental-quality-evaluation-B [environmental-quality-evaluation-B] of copy
+  set economic-sustainability-evaluation-B [economic-sustainability-evaluation-B ] of copy
+  set prestige-evaluation-B [prestige-evaluation-B] of copy
+  set participation-evaluation-B [participation-evaluation-B] of copy
+  
+  set satisfaction-A [satisfaction-A] of copy
+  set satisfaction-B [satisfaction-B] of copy
+  
+  set numFriends [numFriends] of copy
+
+end

@@ -1,0 +1,14 @@
+extensions [ gis ]
+;<summary>
+; load the gis data from the shp file, draw the data and write the cusec code to any patch who belongs to a census section
+;</summary>
+to Make-Terrain
+ 
+  let elhierro-dataset gis:load-dataset "/ElHierro/ElHierro.shp"
+  gis:set-world-envelope gis:envelope-of elhierro-dataset
+  gis:set-drawing-color black
+  foreach gis:feature-list-of elhierro-dataset [? -> gis:draw ? 1.0]
+  ;the cusec code identify the census section
+  gis:apply-coverage elhierro-dataset "CUSEC" district-id
+  
+end
