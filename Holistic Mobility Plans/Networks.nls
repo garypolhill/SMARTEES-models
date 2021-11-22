@@ -1,0 +1,93 @@
+to Friend-Networks
+  let crit1 ["18-24" "25-64" "65+"]
+  let crit2 ["higher" "middle" "lower"]
+  Networks crit1 crit2 "friend" 0.03 5
+  ask humats [set no-friends count my-friends]
+  type "Building Friend-Networks - with median: " print median [no-friends] of humats
+  ;ask friends [set color yellow]
+end
+
+to Work-Networks
+  let crit1 ["student" "employed" "inactive" "retired"]
+  let crit2 ["higher" "middle" "lower"]
+  Networks crit1 crit2 "work" 0.01 5
+  ask humats [set no-works count my-works]
+  type "Building Work-Networks - with median: " print median [no-works] of humats
+end
+
+to Neighbor-Networks
+  ; nearest link
+  ; size of the network depends on a district 
+  ask humats [
+    let nb other humats in-radius 5 
+    let nbs nb with [age = [age] of myself] ; neighbors simmilar
+    let count-nbors count nbs
+    let max-nbors (district-nbors-patch - 1 + (random 3)) ; dependent on networksize of district
+    if count-nbors = 0 [
+      set nbs nb
+      set count-nbors count nbs
+      if count-nbors = 0 [
+        set nbs min-n-of 1 other humats [distance myself]
+        set count-nbors 1
+      ]
+    ]
+    ifelse count-nbors != 1 [ 
+      if count-nbors >= max-nbors [
+        set nbs min-n-of max-nbors nbs [distance myself]
+      ]
+      create-nbors-with nbs with [not in-friend-neighbor? myself]
+    ][
+      create-nbor-with one-of nbs]
+  ]
+  ask humats [set no-nbors count my-nbors]
+  type "Building Neighbor-Networks - with median: " print median [no-nbors] of humats
+end
+
+to Networks [crit1 crit2 net mix density] ; for global network generator
+;devide humats into groups  
+  let g [0]   
+  foreach crit1[ x -> 
+    foreach crit2 [ y ->
+      let humatset humats with [(ifelse-value 
+          net = "friend" [age = x and education-level = y]
+          net = "work" [economic-activity = x and education-level = y])
+      ]        
+      ask humatset [
+        set group item 0 g
+        set mixgroup group
+      ]
+      ifelse count humatset > 0 [set g fput (item 0 g + 1) g][set g but-first g]    
+    ]   
+  ]set g but-first g
+; mix up groups  
+  foreach g [ 
+    x -> 
+    let othergroups remove x g
+    let subset humats with [group = x]
+    ask n-of (mix * count subset) subset[
+      set mixgroup one-of othergroups 
+    ]
+  ]  
+;distribute humats of mix-groups to squares
+  ask humats [ 
+    let number set_position mixgroup
+    setxy item 0 number item 1 number
+  ] 
+  foreach g [ 
+    x ->
+    let humatset humats with [mixgroup = x]
+    let radius sqrt((density / pi) / (count humatset / 120 ^ 2))  
+    ask humatset[
+      if net = "friend" [create-friends-with other humatset with [not in-friend-neighbor? myself] in-radius radius ]
+      if net = "work" [create-works-with other humatset with [not in-work-neighbor? myself] in-radius radius]
+    ]
+    ;ask one-of humatset [set size radius * 2 set shape "circle"]
+    ]
+end
+
+to-report set_position [number] ; reporting the position of a network
+  let i [[1 1] [1 2] [1 3] [2 1] [2 2] [2 3] [3 1] [3 2] [3 3] [4 1] [4 2] [4 3]]
+  let x 200 - ((item 0 item number i * 120) - random-float 120)
+  let y 180 - ((item 1 item number i * 120) - random-float 120)
+  report list (x) (y)
+end

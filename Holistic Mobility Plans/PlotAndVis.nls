@@ -1,0 +1,332 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Plots and Visualisations and Go ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to CSV-1994
+  file-close-all 
+  file-open "referendum results by district.csv"
+  let headings (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    let data (csv:from-row file-read-line ";")
+    ask patches with [district-id-patch = item 0 data] [
+      set %A-1994 item 2 data
+      set %voters-1994 item 3 data
+    ]
+  ]
+  file-close-all 
+  print "1994 Referendum loaded" 
+end
+
+to CSV-Simulation
+  file-close-all 
+  file-open "referendum results by district.csv"
+  let headings (csv:from-row file-read-line ";")
+  while [ not file-at-end? ] [
+    let data (csv:from-row file-read-line ";")
+    ask patches with [district-id-patch = item 0 data] [
+      set %A-1994 item 2 data
+      set %voters-1994 item 3 data
+    ]
+  ]
+  file-close-all 
+  print "1994 Referendum loaded" 
+
+end
+  
+
+
+to Color-Districts-Normal
+  ask patches
+  [
+    if district-id-patch = 1 [set pcolor 45]
+    if district-id-patch = 2 [set pcolor 25]
+    if district-id-patch = 3 [set pcolor 75]
+    if district-id-patch = 4 [set pcolor 87]
+    if district-id-patch = 5 [set pcolor 84]
+    if district-id-patch = 6 [set pcolor 97]
+    if district-id-patch = 7 [set pcolor 95]
+    if district-id-patch = 8 [set pcolor 115]
+    if district-id-patch = 9 [set pcolor 125]
+    if district-id-patch = 10 [set pcolor 135]
+    if district-id-patch = 11 [set pcolor 66]
+    if district-id-patch = 12 [set pcolor 55]
+    if district-id-patch = 13 [set pcolor 15]
+  ]
+end
+
+to Color-Districts-Voters
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    let A humats with [voting? = 1 and behaviour = "A" and district-id-humat = x] ;voting humats with behaviour A in district x
+    let nA count A
+    let B humats with [voting? = 1 and behaviour = "B" and district-id-humat = x] ;voting humats with behaviour B in district x
+    let nB count B
+    let C humats with [voting? = 1 and district-id-humat = x] ;voting humats in district x
+    let nC count C
+    let cC 0
+    let scale 0
+    let scaleA precision ((nA / nC) * 100) 0
+    let scaleB precision ((nB / nC) * 100) 0
+    ifelse (nA > nB)[
+      set scale scaleA
+      set cC 65]
+    [
+      set scale scaleB
+      set cC 15]
+    ask patches with [district-id-patch = x] [
+      set pcolor scale-color cC scale 110 48
+      set %A scaleA
+      set %B scaleB
+    ]
+  ] 
+end
+
+to Color-Districts-Preferences
+  
+ foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    let A humats with [behaviour = "A" and district-id-humat = x] ; humats with behaviour A in district x
+    let nA count A
+    let B humats with [behaviour = "B" and district-id-humat = x] ;humats with behaviour B in district x
+    let nB count B
+    let C humats with [district-id-humat = x] ; humats in district x
+    let nC count C
+    let cC 0
+    let scale 0
+    let scaleA precision ((nA / nC) * 100) 0
+    let scaleB precision ((nB / nC) * 100) 0
+    ifelse (nA > nB)[
+      set scale scaleA
+      set cC 65]
+    [
+      set scale scaleB
+      set cC 15]
+    ask patches with [district-id-patch = x] [
+      set pcolor scale-color cC scale 110 48
+      set %A scaleA
+      set %B scaleB
+    ]
+  ]   
+end
+
+to Color-Districts-Voters1994
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    let D patches with [district-id-patch = x]
+    let A [%A-1994] of one-of D
+    let B 100 - A
+    let C 0
+    let scale 0
+    ifelse (A > B)[
+      set scale A
+      set C 65]
+    [
+      set scale B
+      set C 15]
+    ask D [
+      set pcolor scale-color C scale 110 48
+    ]
+  ] 
+end
+
+
+
+to Display_Statistics
+  output-print "Population in districts: "
+  foreach gis:feature-list-of districts
+  [ x ->
+    output-type gis:property-value x "NAME" output-type ": " output-print (count humats with [district-name-humat = gis:property-value x "NAME"])
+  ]
+  output-print ""
+  output-type "total citizens: " output-print (count humats)
+end
+
+to Display-District-Voters-%A
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    type x type ". " type one-of [district-name-patch] of patches with [district-id-patch = x]  type " Behavior A: " print precision ((count humats with [voting? = 1 and behaviour = "A" and district-id-humat = x] / count humats with [voting? = 1 and district-id-humat = x] )* 100) 2  
+  ]
+end
+
+to Display-District-%Voters
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    type x type ". " type one-of [district-name-patch] of patches with [district-id-patch = x]  type " % voted: " print precision ((count humats with [voting? = 1 and district-id-humat = x] / count humats with [district-id-humat = x] ) * 100) 0  
+  ]
+end
+
+;;;;;;; Calibration and Debugging
+
+to plot-mean [n]
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    print mean [(ifelse-value 
+      (n = 1) [motive-1-importance]
+      (n = 2) [motive-2-importance]
+      (n = 3) [motive-3-importance]
+      (n = 4) [motive-4-importance]
+      [motive-5-importance])
+    ] of humats with [voting? = 1 and district-id-humat = x]
+  ]
+end
+
+to plot-%posA [n]
+  print "Start"
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    print (count humats with [(ifelse-value 
+      (n = 1) [motive-1-evaluation-A > 0]
+      (n = 2) [motive-2-evaluation-A > 0]
+      (n = 3) [motive-3-evaluation-A > 0]
+      (n = 4) [motive-4-evaluation-A > 0]
+      [motive-5-evaluation-A > 0]) 
+      and district-id-humat = x] / count humats with [district-id-humat = x])
+    ]
+end
+
+to plot-%posB [n]
+  print "Start"
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    print (count humats with [(ifelse-value 
+      (n = 1) [motive-1-evaluation-B > 0]
+      (n = 2) [motive-2-evaluation-B > 0]
+      (n = 3) [motive-3-evaluation-B > 0]
+      (n = 4) [motive-4-evaluation-B > 0]
+      [motive-5-evaluation-B > 0]) 
+      and district-id-humat = x] / count humats with [district-id-humat = x])
+    ]
+end
+
+to plot-min [n]
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    type "District " type x type ": " print min [(ifelse-value 
+      (n = 1) [motive-1-importance]
+      (n = 2) [motive-2-importance]
+      (n = 3) [motive-3-importance]
+      (n = 4) [motive-4-importance]
+      [motive-5-importance])
+    ] of humats with [voting? = 1 and district-id-humat = x]
+  ]
+end
+
+to plot-max [n]
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    type "District " type x type ": " print max [(ifelse-value 
+      (n = 1) [motive-1-importance]
+      (n = 2) [motive-2-importance]
+      (n = 3) [motive-3-importance]
+      (n = 4) [motive-4-importance]
+      [motive-5-importance])
+    ] of humats with [voting? = 1 and district-id-humat = x]
+  ]
+end
+
+to plot-med [n]
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    print median [(ifelse-value 
+      (n = 1) [motive-1-importance]
+      (n = 2) [motive-2-importance]
+      (n = 3) [motive-3-importance]
+      (n = 4) [motive-4-importance]
+      [motive-5-importance])
+    ] of humats with [voting? = 1 and district-id-humat = x]
+  ]
+end
+
+ to plot-sum
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x ->
+    type "District " type x type ": " print mean [motives-importances-sum] of humats with [voting? = 1 and district-id-humat = x]
+  ]
+end
+
+to plot-district
+ foreach [1 2 3 4 5 6 7 8 9 10 11 12 13]
+  [x -> print one-of [district-name-patch] of patches with [district-id-patch = x]
+  ]
+end
+
+
+to Display-Label
+  crt 1 [ ;8 Lewenborg
+    setxy 202 56
+    set label-color 9.9
+    set label district-name-patch 
+]
+
+crt 1 [ ;9 Beijum
+    setxy 104 88
+    set label-color 9.9
+    set label district-name-patch
+]
+
+crt 1 [ ; Nieuw-Oost
+    setxy 138 59
+    set label-color 9.9
+    set label district-name-patch  
+]
+
+crt 1 [ ; Korreweg / De Hoogte
+    setxy 73 35
+    set label-color 9.9
+    set label "Korreweg / De Hoogte"
+]
+
+crt 1 [ ;Paddepoel
+    setxy -48 28
+    set label-color 9.9
+    set label "Paddepoel"
+]
+
+crt 1 [ ; Oranjewijk / Schilderswijk
+    setxy  -2 -1
+    set label-color 9.9
+    set label "Oranjewijk / Schilderswijk" 
+]
+
+crt 1 [ ; Oud-Zuid
+    setxy 16 -47
+    set label-color 9.9
+    set label district-name-patch 
+]
+
+crt 1 [ ;Nieuw-Zuid (corporatief)
+    setxy 73 -80
+    set label-color 9.9
+    set label district-name-patch  
+]
+
+crt 1 [ ; Nieuw-Zuid (particulier)
+    setxy 26 -113
+    set label-color 9.9
+    set label district-name-patch 
+]
+
+crt 1 [ ; Vinkhuizen
+    setxy -100 13
+    set label-color 9.9
+    set label "Vinkhuizen" 
+]
+
+crt 1 [ ; Hoogkerk / De Dorpen
+    setxy -138 -50
+    set label-color 9.9
+    set label "Hoogkerk / De Dorpen"
+]
+
+crt 1 [ ;Centrum
+    setxy 23 -13
+    set label-color black
+    set label district-name-patch
+]
+
+crt 1 [ ;Oosterpark
+    setxy 91 7
+    set label-color 9.9
+    set label district-name-patch
+]
+end

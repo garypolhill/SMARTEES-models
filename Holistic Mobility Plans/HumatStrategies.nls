@@ -1,0 +1,267 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Humat - Inquiring and Signaling ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to Go-Vote
+  ask humats [set voting? 0]
+  set voters Is-Voter
+  print count voters
+  ask voters[
+    set voting? 1
+  ]
+end
+
+to Inquire
+  ;here conceptualising dissonance reduction strategies depending on dilemmas a HUMAT is experiencing
+  ;during inquiring information flows uni-directionally from the alter, who was giving advice to the ego, who was asking for advice
+  ;activating dissonance reduction strategies - this is pre-action dissonance reduction; post action dissonnace reduction is when the action is taken - in Groningen case this is a longer process of making up your mind before the vote; its after the vote when post-action dissonance reduction will have to take place if the vote did not go your way
+  ; INQUIRING
+  ;inquire strategy - seek information in social network to reduce cognitive dissonance via altering EGOs' knowledge structures
+  ;update ego's representation of the inquired alter
+  ask humats [
+    set inquiring? 0
+    if dissonance-strength > 0 and dilemma? = 1 and (ifelse-value behaviour = "A" [social-evaluation-A][social-evaluation-B]) >= 0 [
+      set inquiring? 1
+      set #inquiring #inquiring + inquiring?
+      set inquired-humat item 0 inquiring-list
+      set inquired-humat replace-item 1 inquired-humat 1
+      set inquired-humat replace-item 3 inquired-humat [behaviour] of humat item 0 inquired-humat
+      set inquired-humat replace-item 4 inquired-humat Same-BA? behaviour [behaviour] of humat item 0 inquired-humat
+      set inquired-humat replace-item 5 inquired-humat ifelse-value (Same-BA? behaviour [behaviour] of humat item 0 inquired-humat = 1) [0] [1]
+      set inquired-humat replace-item 6 inquired-humat [social-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 7 inquired-humat [motive-1-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 8 inquired-humat [motive-2-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 9 inquired-humat [motive-3-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 10 inquired-humat [motive-4-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 11 inquired-humat [motive-5-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 12 inquired-humat [social-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 13 inquired-humat [motive-1-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 14 inquired-humat [motive-2-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 15 inquired-humat [motive-3-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 16 inquired-humat [motive-4-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 17 inquired-humat [motive-5-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 18 inquired-humat [social-satisfaction-B] of humat item 0 inquired-humat
+      set inquired-humat replace-item 19 inquired-humat [motive-1-satisfaction-B] of humat item 0 inquired-humat
+      set inquired-humat replace-item 20 inquired-humat [motive-2-satisfaction-B] of humat item 0 inquired-humat
+      set inquired-humat replace-item 21 inquired-humat [motive-3-satisfaction-B] of humat item 0 inquired-humat
+      set inquired-humat replace-item 22 inquired-humat [motive-4-satisfaction-B] of humat item 0 inquired-humat
+      set inquired-humat replace-item 23 inquired-humat [motive-5-satisfaction-B] of humat item 0 inquired-humat
+      ; Need-Similarity is symmetric - if ego influences alter to the degree of 40% (max), alter also influences ego to the degree of 40%
+      set inquired-humat replace-item 24 inquired-humat Need-Similarity motive-1-evaluation-A [motive-1-evaluation-A] of humat item 0 inquired-humat motive-1-importance [motive-1-importance] of humat item 0 inquired-humat ;similarity-A-motive-1-importance - similarity between he importance of needs; only > 0 if the given BA satisfies that group of needs in a similar direction for the alter and for the ego[motive-1-satisfaction-A] of humat item 0 inquired-humat
+      set inquired-humat replace-item 25 inquired-humat Need-Similarity motive-2-evaluation-A [motive-2-evaluation-A] of humat item 0 inquired-humat motive-2-importance [motive-2-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 26 inquired-humat Need-Similarity motive-3-evaluation-A [motive-3-evaluation-A] of humat item 0 inquired-humat motive-3-importance [motive-3-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 27 inquired-humat Need-Similarity motive-4-evaluation-A [motive-4-evaluation-A] of humat item 0 inquired-humat motive-4-importance [motive-4-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 28 inquired-humat Need-Similarity motive-5-evaluation-A [motive-5-evaluation-A] of humat item 0 inquired-humat motive-5-importance [motive-5-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 29 inquired-humat Need-Similarity motive-1-evaluation-B [motive-1-evaluation-B] of humat item 0 inquired-humat motive-1-importance [motive-1-importance] of humat item 0 inquired-humat ;similarity-A-motive-1-importance - similarity between he importance of needs; only > 0 if the given BA satisfies that group of needs in a similar direction for the alter and for the ego
+      set inquired-humat replace-item 30 inquired-humat Need-Similarity motive-2-evaluation-B [motive-2-evaluation-B] of humat item 0 inquired-humat motive-2-importance [motive-2-importance] of humat item 0 inquired-humat                                       ;similarity-B-motive-1-importance
+      set inquired-humat replace-item 31 inquired-humat Need-Similarity motive-3-evaluation-B [motive-3-evaluation-B] of humat item 0 inquired-humat motive-3-importance [motive-3-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 32 inquired-humat Need-Similarity motive-4-evaluation-B [motive-4-evaluation-B] of humat item 0 inquired-humat motive-4-importance [motive-4-importance] of humat item 0 inquired-humat
+      set inquired-humat replace-item 33 inquired-humat Need-Similarity motive-5-evaluation-B [motive-5-evaluation-B] of humat item 0 inquired-humat motive-5-importance [motive-5-importance] of humat item 0 inquired-humat
+      ; relative-aspiration is not symmetric
+      set inquired-humat replace-item 34 inquired-humat Relative-Aspiration [ses] of humat item 0 inquired-humat ses        ; relative social appeal/status (aspiration characteristic) in case of inquiring                                                                                                                         ; persuasion is a multiplication of need-similatiry and relative-aspiration, and is not symmetric (different values for inquiring and signaling)
+      set inquired-humat replace-item 36 inquired-humat (item 24 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-1-A = relative social appeal/status * similarity-A-experiential (similarity of needs activated by a BA)
+      set inquired-humat replace-item 37 inquired-humat (item 25 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-2-A
+      set inquired-humat replace-item 38 inquired-humat (item 26 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-3-A
+      set inquired-humat replace-item 39 inquired-humat (item 27 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-4-A
+      set inquired-humat replace-item 40 inquired-humat (item 28 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-5-A
+      set inquired-humat replace-item 41 inquired-humat (item 29 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-1-B
+      set inquired-humat replace-item 42 inquired-humat (item 30 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-2-B
+      set inquired-humat replace-item 43 inquired-humat (item 31 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-3-B
+      set inquired-humat replace-item 44 inquired-humat (item 32 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-3-B
+      set inquired-humat replace-item 45 inquired-humat (item 33 inquired-humat * item 34 inquired-humat) ; inquiring-persuasion-motive-3-B
+      set inquired-humat replace-item 56 inquired-humat (
+        item 36 inquired-humat + item 37 inquired-humat + item 38 inquired-humat + item 39 inquired-humat + item 40 inquired-humat +
+        item 41 inquired-humat + item 42 inquired-humat + item 43 inquired-humat + item 44 inquired-humat + item 45 inquired-humat) 
+      ; inquiring persuasion = sum of inquiring persuasions
+      ; here not seting the signaling persuasion, not to disturb the sorting process artificially by choosing the alter already inquired with for signaling, without going through the entire list of alters
+      ; to do: describe the effect this has on the dynamics?  this is to do with sorting and the 3rd prio - it has to stay 0 for the ego to go through the entire list of alters before going for the most persuasive one over and over again
+      ;update satisfactions
+      ; change in next 10 lines
+      set motive-1-importance New-Need-Importance-Inquiring motive-1-importance ifelse-value (item 3 inquired-humat = "A") [36] [41] 7 ;36 or 41 depending on alter's behaviour; if alter's behaviour A -> 36 but if alter's behaviour B -> 41.
+      set motive-2-importance New-Need-Importance-Inquiring motive-2-importance ifelse-value (item 3 inquired-humat = "A") [37] [42] 8
+      set motive-3-importance New-Need-Importance-Inquiring motive-3-importance ifelse-value (item 3 inquired-humat = "A") [38] [43] 9
+      set motive-4-importance New-Need-Importance-Inquiring motive-4-importance ifelse-value (item 3 inquired-humat = "A") [39] [44] 10
+      set motive-5-importance New-Need-Importance-Inquiring motive-5-importance ifelse-value (item 3 inquired-humat = "A") [40] [45] 11
+      Update-Motive-Evaluations
+      Update-Dissonances
+      Choose-Action-Go
+      ; update alter's representation of the inquiring ego
+      ; please note that alter's representation of the inquiring ego is only updated to the extent of the ego's new decision about the BA (items 3,4,5)
+      ask humat item 0 inquired-humat [
+        foreach alter-representation-list [ x -> if item 0 x = [who] of myself [set inquiring-humat item position x alter-representation-list alter-representation-list]]
+        set inquiring-humat replace-item 3 inquiring-humat [behaviour] of myself
+        set inquiring-humat replace-item 4 inquiring-humat Same-BA? behaviour [behaviour] of myself
+        set inquiring-humat replace-item 5 inquiring-humat ifelse-value (Same-BA? behaviour [behaviour] of myself  = 1) [0] [1]
+        foreach alter-representation-list [ x -> if item 0 x = [who] of myself [set alter-representation-list replace-item position x alter-representation-list alter-representation-list inquiring-humat]]
+        set inquiring-humat[] ; might go in the beginning of inquiring procedure to track which humat was inquiring
+        set #inquired #inquired + 1
+        Update-Dissonances
+        Choose-Action-Go
+      ]     
+      set inquiring-list replace-item 0 inquiring-list inquired-humat ;update inquiring-list
+      ;update alter-representation-list by replacing the old representation (of alter the ego inquired with) with a new representation that has accurate knowledge about alters action, motives and status of alteady having been inquired with
+      foreach alter-representation-list [x -> if item 0 x = item 0 item 0 inquiring-list [set alter-representation-list replace-item position x alter-representation-list alter-representation-list item 0 inquiring-list]]
+      ; inquiring-list sorted: (1) ascendingly by inquired? (not inquired with first), (2) descendingly by same-BA? (same behaviour first), (3) descendingly by persuasion (strongest persuasion first).
+      set inquiring-list Sort-List alter-representation-list 1 4 5
+    ]
+  ]
+end
+
+to Signal
+  ; SIGNALING
+  ;signaling strategy - spread information in social network to reduce cognitive dissonance via altering ALTERs' knowledge structures
+  ;during signaling information flows uni-directionally from the ego, who was giving advice to the alter, who was made to listed
+  ;signaled-humat - the list belongs to ego and contains information about the alter who the ego signals to
+  ;signaling-humat - the list belongs to a signaled alter and contains information about the ego who is signaling
+  ask humats [
+    set signaling? 0
+    if dissonance-strength > 0 and dilemma? = 1 and (ifelse-value behaviour = "A" [social-evaluation-A][social-evaluation-B]) < 0 [
+      set signaled-humat item 0 signaling-list ;ego's representation of an alter as a temporary list
+      ;update alter's representation of ego
+      ask humat item 0 signaled-humat [
+        set #signaled #signaled + 1
+        foreach alter-representation-list [ x -> if item 0 x = [who] of myself [set signaling-humat item position x alter-representation-list alter-representation-list]]
+        set signaling-humat replace-item 3  signaling-humat [behaviour] of myself
+        set signaling-humat replace-item 4  signaling-humat Same-BA? behaviour [behaviour] of myself
+        set signaling-humat replace-item 5  signaling-humat ifelse-value (Same-BA? behaviour [behaviour] of myself  = 1) [0] [1]
+        set signaling-humat replace-item 6  signaling-humat [social-importance] of myself
+        set signaling-humat replace-item 7  signaling-humat [motive-1-importance] of myself
+        set signaling-humat replace-item 8  signaling-humat [motive-2-importance] of myself
+        set signaling-humat replace-item 9  signaling-humat [motive-3-importance] of myself
+        set signaling-humat replace-item 10 signaling-humat [motive-4-importance] of myself
+        set signaling-humat replace-item 11 signaling-humat [motive-5-importance] of myself
+        set signaling-humat replace-item 12 signaling-humat [social-satisfaction-A] of myself
+        set signaling-humat replace-item 13 signaling-humat [motive-1-satisfaction-A] of myself
+        set signaling-humat replace-item 14 signaling-humat [motive-2-satisfaction-A] of myself
+        set signaling-humat replace-item 15 signaling-humat [motive-3-satisfaction-A] of myself
+        set signaling-humat replace-item 16 signaling-humat [motive-4-satisfaction-A] of myself
+        set signaling-humat replace-item 17 signaling-humat [motive-5-satisfaction-A] of myself
+        set signaling-humat replace-item 18 signaling-humat [social-satisfaction-B] of myself
+        set signaling-humat replace-item 19 signaling-humat [motive-1-satisfaction-B] of myself
+        set signaling-humat replace-item 20 signaling-humat [motive-2-satisfaction-B] of myself
+        set signaling-humat replace-item 21 signaling-humat [motive-3-satisfaction-B] of myself
+        set signaling-humat replace-item 22 signaling-humat [motive-4-satisfaction-B] of myself
+        set signaling-humat replace-item 23 signaling-humat [motive-5-satisfaction-B] of myself
+        ; need similarity (same values for inquiring and signaling)
+        set signaling-humat replace-item 24 signaling-humat Need-Similarity motive-1-evaluation-A [motive-1-evaluation-A] of myself motive-1-importance [motive-1-importance] of myself ;similarity-A-motive-1-importance - similarity between he importance of needs; only > 0 if the given BA satisfies that group of needs in a similar direction for the alter and for the ego[motive-1-satisfaction-A] of humat item 0 signaled-humat
+        set signaling-humat replace-item 25 signaling-humat Need-Similarity motive-2-evaluation-A [motive-2-evaluation-A] of myself motive-2-importance [motive-2-importance] of myself
+        set signaling-humat replace-item 26 signaling-humat Need-Similarity motive-3-evaluation-A [motive-3-evaluation-A] of myself motive-3-importance [motive-3-importance] of myself
+        set signaling-humat replace-item 27 signaling-humat Need-Similarity motive-4-evaluation-A [motive-4-evaluation-A] of myself motive-4-importance [motive-4-importance] of myself
+        set signaling-humat replace-item 28 signaling-humat Need-Similarity motive-5-evaluation-A [motive-5-evaluation-A] of myself motive-5-importance [motive-5-importance] of myself
+        set signaling-humat replace-item 29 signaling-humat Need-Similarity motive-1-evaluation-B [motive-1-evaluation-B] of myself motive-1-importance [motive-1-importance] of myself ;similarity-A-motive-1-importance - similarity between he importance of needs; only > 0 if the given BA satisfies that group of needs in a similar direction for the alter and for the ego
+        set signaling-humat replace-item 30 signaling-humat Need-Similarity motive-2-evaluation-B [motive-2-evaluation-B] of myself motive-2-importance [motive-2-importance] of myself ;similarity-B-motive-1-importance
+        set signaling-humat replace-item 31 signaling-humat Need-Similarity motive-3-evaluation-B [motive-3-evaluation-B] of myself motive-3-importance [motive-3-importance] of myself
+        set signaling-humat replace-item 32 signaling-humat Need-Similarity motive-4-evaluation-B [motive-4-evaluation-B] of myself motive-4-importance [motive-4-importance] of myself
+        set signaling-humat replace-item 33 signaling-humat Need-Similarity motive-5-evaluation-B [motive-5-evaluation-B] of myself motive-5-importance [motive-5-importance] of myself
+        ; relative aspiration is not symmetric (different values for inquiring and signaling)
+        set signaling-humat replace-item 35 signaling-humat Relative-Aspiration [ses] of myself ses ; relative social appeal/status (aspiration characteristic) in case of signaling                                                                                  ; persuasion is a multiplication of need-similatiry and relative-aspiration, and is not symmetric (needs different values for inquiring and signaling)
+        set signaling-humat replace-item 46 signaling-humat (item 24 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-1-A = relative social appeal/status * similarity-A-experiential (similarity of needs activated by a BA)
+        set signaling-humat replace-item 47 signaling-humat (item 25 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-2-A
+        set signaling-humat replace-item 48 signaling-humat (item 26 signaling-humat * item 35 signaling-humat) ; motive-3-persuasion-motive-2-A
+        set signaling-humat replace-item 49 signaling-humat (item 27 signaling-humat * item 35 signaling-humat) ; motive-4-persuasion-motive-2-A
+        set signaling-humat replace-item 50 signaling-humat (item 28 signaling-humat * item 35 signaling-humat) ; motive-5-persuasion-motive-2-A
+        set signaling-humat replace-item 51 signaling-humat (item 29 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-1-B
+        set signaling-humat replace-item 52 signaling-humat (item 30 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-2-B
+        set signaling-humat replace-item 53 signaling-humat (item 31 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-3-B
+        set signaling-humat replace-item 54 signaling-humat (item 32 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-4-B
+        set signaling-humat replace-item 55 signaling-humat (item 33 signaling-humat * item 35 signaling-humat) ; signaling-persuasion-motive-5-B
+        ; seting new experiential and values satisfaction
+        set motive-1-importance New-Need-Importance-Signaling motive-1-importance ifelse-value (item 3 signaling-humat = "A") [46] [51]
+        set motive-2-importance New-Need-Importance-Signaling motive-2-importance ifelse-value (item 3 signaling-humat = "A") [47] [52]
+        set motive-3-importance New-Need-Importance-Signaling motive-3-importance ifelse-value (item 3 signaling-humat = "A") [48] [53]
+        set motive-4-importance New-Need-Importance-Signaling motive-4-importance ifelse-value (item 3 signaling-humat = "A") [49] [54]
+        set motive-5-importance New-Need-Importance-Signaling motive-5-importance ifelse-value (item 3 signaling-humat = "A") [50] [55]
+        ; update alter's representation of the inquiring ego
+        ; long-term memory - please note that alter's representation of the signaling ego only influences the update on social satisfaction, storing information other than about the BA (items 3, 4 aand 5) does not influence anything
+        foreach alter-representation-list [x -> if item 0 x = [who] of myself [set alter-representation-list replace-item position x alter-representation-list alter-representation-list signaling-humat]]
+        ; to do: sort the names and updating dissonances
+        Update-Motive-Evaluations
+        Update-Dissonances
+        Choose-Action-Go
+      ]
+      ; update ego's representation of the signaled alter
+      ; please note that alter's representation of the signaled alter is only updated to the extent of the alter's new decision about the BA (items 3,4,5)
+      set signaled-humat replace-item 2 signaled-humat 1 ;representing the fact that alter was signaled to
+      set signaled-humat replace-item 3 signaled-humat [behaviour] of humat item 0 signaled-humat
+      set signaled-humat replace-item 4 signaled-humat Same-BA? behaviour [behaviour] of humat item 0 signaled-humat
+      set signaled-humat replace-item 5 signaled-humat ifelse-value (Same-BA? behaviour [behaviour] of humat item 0 signaled-humat = 1) [0] [1]
+      set signaled-humat replace-item 57 signaled-humat (
+        item 46 [signaling-humat] of humat item 0 signaled-humat + item 47 [signaling-humat] of humat item 0 signaled-humat + item 48 [signaling-humat] of humat item 0 signaled-humat +
+        item 49 [signaling-humat] of humat item 0 signaled-humat + item 50 [signaling-humat] of humat item 0 signaled-humat + item 51 [signaling-humat] of humat item 0 signaled-humat +
+        item 52 [signaling-humat] of humat item 0 signaled-humat + item 53 [signaling-humat] of humat item 0 signaled-humat + item 54 [signaling-humat] of humat item 0 signaled-humat +
+        item 55 [signaling-humat] of humat item 0 signaled-humat) ; gullibility (the willingness to be persuaded by the ego) of the alter is stores as the ego representation and is used later for sorting the signaling-list
+      ask humat item 0 signaled-humat [
+        set signaling-humat []
+      ]
+      ; update signaling-list
+      set signaling-list replace-item 0 signaling-list signaled-humat
+      ;update alter-representation-list by replacing the old representation (of alter the ego signaled to) with a new representation that has accurate knowledge about alters action and status of alteady having been signaled to
+      foreach alter-representation-list [x -> if item 0 x = item 0 item 0 signaling-list [set alter-representation-list replace-item position x alter-representation-list alter-representation-list item 0 signaling-list]]
+      ; signaling-list sorted:
+      ; (1) ascendingly by signaled? (not signaled to first),
+      ; (2) descendingly by not the same-BA? (different behaviour first), and
+      ; (3) descendingly by gullibility (the most easily persuaded first; sum of aspiration*similarity over experiential and values for both BAs; please note that ego will signal to all alters in its social network and then will focus on the most easily persuaded until that one changes its mind)
+      set signaling-list Sort-List alter-representation-list 2 5 57
+      set signaling? 1
+      set #signaling #signaling + 1
+      Update-Dissonances
+      Choose-Action-Go
+
+    ]
+  ]
+end
+
+to Update-Motive-Evaluations ; updates all motives (except Social) ; HUMAT-oriented
+  ; update evaluations = importances * satisfactions ; excluding social dimension
+  ; A
+  set motive-1-evaluation-A motive-1-importance * motive-1-satisfaction-A
+  set motive-2-evaluation-A motive-2-importance * motive-2-satisfaction-A
+  set motive-3-evaluation-A motive-3-importance * motive-3-satisfaction-A
+  set motive-4-evaluation-A motive-4-importance * motive-4-satisfaction-A
+  set motive-5-evaluation-A motive-5-importance * motive-5-satisfaction-A
+  ; B
+  set motive-1-evaluation-B motive-1-importance * motive-1-satisfaction-B
+  set motive-2-evaluation-B motive-2-importance * motive-2-satisfaction-B
+  set motive-3-evaluation-B motive-3-importance * motive-3-satisfaction-B
+  set motive-4-evaluation-B motive-4-importance * motive-4-satisfaction-B
+  set motive-5-evaluation-B motive-5-importance * motive-5-satisfaction-B
+end
+
+to Update-Dissonances ; HUMAT-oriented
+  ; each tick, all humats recalculate their social satisfactions and final satisfactions, and dissonances, not only the one that changed his mind
+  ; update social satisfaction on the basis of alter-representation list
+  ; update social evaluation
+  ; update satisfaction from BAs
+  ; update social dimension: social satisfaction from BAs, evaluations of BAs
+  Set-Social-Dimensions
+  ; reset the previous values of dilemmas
+  ; update dilemmas
+  Calc-Dilemma
+  Set-Dissonance-Strength
+  ; setting dissonance strength and colours
+end
+
+to Choose-Action-Go ; HUMAT-oriented
+  ; The BA comparison dimensions include:
+  ;* overall satisfaction - if similarly satisfying (+/- 0.2 = 10% of the theoretical satisfaction range <-1;1>), then
+  ;* dissonance level - if similarly dissonant (+/- 0.1 = 10% of the theoretical dissonance range <0;1>), then
+  ;* stick to previous choice.
+  (ifelse Further-Comparison-Needed? satisfaction-A satisfaction-B 2 [Compare-Dissonances-Go]
+    [ifelse satisfaction-A > satisfaction-B
+      [set behaviour "A" set satisfaction satisfaction-A]
+      [set behaviour "B" set satisfaction satisfaction-B]
+    ]
+  )
+end
+
+to Compare-Dissonances-Go ; HUMAT-oriented
+  (ifelse Further-Comparison-Needed? dissonance-A dissonance-B 1 [Choose-Habit]
+    [ifelse dissonance-A < dissonance-B
+      [set behaviour "A" set satisfaction satisfaction-A]
+      [set behaviour "B" set satisfaction satisfaction-B]]
+  )
+end
+
+to Choose-Habit ; in such situation humat stays with the previous behaviour (habit formation) ; HUMAT-oriented
+  set behaviour behaviour
+end

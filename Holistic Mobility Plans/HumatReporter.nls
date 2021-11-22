@@ -1,0 +1,205 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Humat - Reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to-report Is-Voter
+  report humats with [motives-importances-sum > 0.833 or (max (list motive-1-importance motive-2-importance motive-3-importance motive-4-importance motive-5-importance)) > 0.85 ]
+end
+
+
+to-report Is-Voting
+  let %30 round (0.3 * N-pop)
+  let importaces-list sort-on [(- motives-importances-sum)] humats
+  report [motives-importances-sum] of item %30 importaces-list
+end
+
+to-report Voter-Turnout
+  report count humats with [voting? = 1] / count humats
+end
+
+to-report Voter-%A
+  report (count humats with [voting? = 1 and behaviour = "A"]) / count humats with [voting? = 1]
+end
+
+;Motives
+
+to-report Motive-1-Importance-Reporter ;children's safety in the park ; a = age g = gender ; motive 3 in samso safety plant
+  let park-distance distance patch -35 7 + 30 ; 
+  let my-importance e ^ (- (park-distance / 50))
+  let bgd 0  
+  (ifelse; bgd = between group difference , wgd = within group difference
+    age = "18-24" [set bgd ifelse-value gender = "female" [0.09][0.12]]
+    age = "25-64" [set bgd ifelse-value gender = "female" [0][0.03]]
+    age = "65+" [set bgd ifelse-value gender = "female" [0.06][0.09]])  
+  let I my-importance - (bgd * my-importance) + random-normal 0 0.05
+  if I > 1 [set I 1] 
+  if I < 0 [set I 0] 
+  report I
+end
+
+to-report Motive-2-Importance-Reporter ;shopping convenience
+  let shopping-distance distance patch -81 28 + 20 ; I = e^-x, where x is the distance from the shopping center. 
+  let importance e ^ (- (shopping-distance / 20)) ; importance by distance
+  let wgd 0.1 * importance   ; bgd = between group difference , wgd = within group difference
+  let bgd (ifelse-value
+    age = "18-24" [0.1]
+    age = "25-64" [0.05]
+    age = "65+" [0])
+  let I importance - (bgd * importance) - wgd + random-float (2 * wgd)
+  if I > 1 [set I 1] 
+  if I < 0 [set I 0] 
+  report I
+end
+
+to-report Motive-3-Importance-Reporter ;transport convenience with a car within the city I = e ^ x, where x is the distance from the park. ;in samso motive 4 
+  let park-distance distance patch -35 7 ; 
+  let transform-park-distance park-distance / 85 ;90
+  if transform-park-distance <= 0 [set transform-park-distance 0.0000000000000001]
+  let my-importance e ^ (- (1 / transform-park-distance))
+  let I my-importance  + random-normal 0 0.05
+  if I > 1 [set I 1] 
+  if I < 0 [set I 0] 
+  report I
+end
+
+to-report Motive-4-Importance-Reporter ;park activities I = e^-x, where x is the distance from the park.
+  let park-distance distance patch -35 7 + 10 ; 
+  let my-importance e ^ (- (park-distance / 30))
+  let I my-importance + random-normal 0 0.05
+  report I
+end
+
+to-report Motive-5-Importance-Reporter ;environmental awareness ; in samso motive 5 sustainability
+  let importance 0.4 ;0.55
+  let bgd (ifelse-value
+    economic-activity = "student" [0] 
+    education-level = "higher" [0.05]  
+    education-level = "middle" [0.1]
+    education-level = "lower" [0.15]
+    )
+  let I importance - (bgd * importance) + random-normal 0 0.05
+  if I > 1 [set I 1] if I < 0 [set I 0] 
+  report I
+end
+
+;changed
+to-report Alter-Guess-Behaviour? [actual-behavior]
+  let alt-behaviours list ("A") ("B")
+  set alt-behaviours remove actual-behavior alt-behaviours
+  let result one-of alt-behaviours
+  if random-float 1.0 <= 0.8 [set result actual-behavior]
+  report result
+end
+
+to-report Random-Normal-Trunc [mid dev mmin mmax]
+  ; creating a trunc normal function to be used for tuncating the normal distribution between mmin and mmax values
+  ; good for now, but the goeal would be to get to the normal from beta (using gamma as a start)
+  let result random-normal mid dev
+  if result < mmin or result > mmax
+  [report Random-Normal-Trunc mid dev mmin mmax]
+  report result
+end
+
+to-report Normalized-Min-Max [norm-variable min-old max-old min-new max-new]
+  let norm min-new + (((norm-variable - min-old) * (max-new - min-new)) / (max-old - min-old))
+  report norm
+end
+
+; dissatisfying-status-BA and satisfying-status-BA should be merged into one reposrting procedure, however it seems that operators cannot be inputs in reporting procedures
+to-report Dissatisfying-Status-BA [evaluations-list-BA]
+  let dissatisfying-list-BA filter [i -> i < 0] evaluations-list-BA
+  let dissatisfying-stat-BA abs sum dissatisfying-list-BA
+  report dissatisfying-stat-BA
+end
+
+to-report Satisfying-Status-BA [evaluations-list-BA]
+  let satisfying-list-BA filter [i -> i > 0] evaluations-list-BA
+  let satisfying-stat-BA abs sum satisfying-list-BA
+  report satisfying-stat-BA
+end
+
+to-report Dissonance-Status-A [sat-A dis-A] ; sat-A is satisfying-A and dis-A is dissatisfying-A
+  let dissonant-A min (list sat-A dis-A)
+  let consonant-A max (list sat-A dis-A) ; in case of the same values, it does not matter
+  let dissonance-of-A (2 * dissonant-A)/(0.0001 + (dissonant-A + consonant-A)) ; 0.0001 avoids division by 0
+  report dissonance-of-A
+end
+
+to-report Dissonance-Status-B [sat-B dis-B] ; sat-B is satisfying-B and dis-B is dissatisfying-B
+  let dissonant-B min (list sat-B dis-B)
+  let consonant-B max (list sat-B dis-B) ; in case of the same values, it does not matter
+  let dissonance-of-B (2 * dissonant-B)/(0.0001 + (dissonant-B + consonant-B)) ; 0.0001 avoids division by 0
+  report dissonance-of-B
+end
+
+to-report Shading [dissonance-str]
+  let shade Normalized-Min-Max (-1 * dissonance-str) -1 0 -5 0
+  report shade
+end
+
+to-report Further-Comparison-Needed? [comparison-dimension-A comparison-dimension-B theoretical-range]
+  let value 0
+  ifelse (comparison-dimension-A > comparison-dimension-B - 0.1 * theoretical-range) and (comparison-dimension-A < comparison-dimension-B + 0.1 * theoretical-range) [set value true] [set value false]
+  report value
+end
+
+to-report Relative-Aspiration [aspiration-influencing aspiration-influenced] 
+  ; produces values <0 ; 1 > - weighing of the influenced agent's status
+  ; for inquiring the influencing agent is the alter, who is influencing the ego
+  ; for signlaing the influencing agent is the ego, who is influencing the alter  
+  let rel-aspiration 0.4 + aspiration-influencing - aspiration-influenced
+  if 0.4 + aspiration-influencing - aspiration-influenced > 1 [set rel-aspiration 1]
+  if 0.4 + aspiration-influencing - aspiration-influenced < 0 [set rel-aspiration 0]
+  report precision rel-aspiration 3
+end
+
+; to do: relative-ses-signaling [ego-ses alter-ses] ;still???
+
+to-report Same-BA? [ego-val alter-val]
+  ;
+  ifelse ego-val = alter-val
+  [report 1] ; 1 is the same BA
+  [report 0] ; 0 is different BA
+end
+
+;to do: add presuasion to sorting
+to-report Sort-List [the-list prio-1 prio-2 prio-3] 
+  ; the same sorting reporter for inquiring and signaling lists, just used with different priority characteristics
+  ; the-list = the nested list you want to sort ; prio-1 = the first prio characteristic; prio-2 = the second prio characteristic; prio-3 - the third prio characteristic
+  ; the ego inquires with alters who a) have not been inquired with yet b) choose the same behaviour and c) are the most persuasive (sum of aspiration*similarity over experiential and values for both BAs; please note that the most persuasive only plays part once ego inquired with all alters in its social network)
+  ; the ego signals to alters who a) have not been signaled to yet b) choose a different behaviour
+  let sorted sort-by [[?1 ?2] -> item prio-3 ?1 > item prio-3 ?2] the-list
+  set sorted sort-by [[?1 ?2] -> item prio-2 ?1 > item prio-2 ?2] sorted
+  set sorted sort-by [[?1 ?2] -> item prio-1 ?1 < item prio-1 ?2] sorted
+  report sorted
+end
+
+to-report Need-Similarity [need-evaluation-BA-ego need-evaluation-BA-alter need-importance-ego need-importance-alter] ; weighing of alter's similarity of needs, applicable to each group of needs for each BA
+  ; can take a max value of 0,4 - if two agents value the same needs to the same extent, the influencing agent affects the influenced agent to a max degree of 40% (new value is 60% influnced agent's and 40% influencing agent).
+  ; if two agents don't find the same needs important, the influencing agent does not affect the influenced agent
+  ifelse
+  (need-evaluation-BA-ego > 0 and need-evaluation-BA-alter > 0) or
+  (need-evaluation-BA-ego < 0 and need-evaluation-BA-alter < 0)
+  [report 0.4 * (1 - abs(need-importance-ego - need-importance-alter))]
+  [report 0]
+end
+
+to-report New-Need-Importance-Inquiring [need-importance-BA #item #item2]
+  ; the #item refers to the number of item on the list, which designates inquiring persuasion for each need-satisfaction-BA
+  ; the #item2 refers to the number of item on the list, which designates need-satisfaction-BA of alter
+  ; when humats are persuaded by other humats in their social networks, they change their satisfactions of needs for BAs to the extent that the alter is persuasive (status * similar of needs importances for the BA)
+  ; reports a new value of needs satisfaction for a persuaded HUMAT
+  ; done for experiential needs and values of both BAs
+  let val (1 - item #item inquired-humat) * need-importance-BA + item #item inquired-humat * item #item2 inquired-humat
+  report val
+end
+
+; to do: whis is to take into account that signaled-humat is the convincing's humat list and here it assumes to be the convinced's humat list - to change
+to-report New-Need-Importance-Signaling [need-importance-BA #item]
+  ; the #item refers to the number of item on the list, which designates signaling persuasion for each need-satisfaction-BA
+  ; when humats are persuaded by other humats in their social networks, they change their satisfactions of needs for BAs to the extent that the alter is persuasive (status * similar of needs importances for the BA)
+  ; reports a new value of needs satisfaction for a persuaded HUMAT
+  ; done for experiential needs and values of both BAs
+  report (1 - item #item signaling-humat) * need-importance-BA + item #item signaling-humat * [need-importance-BA] of myself
+end
+

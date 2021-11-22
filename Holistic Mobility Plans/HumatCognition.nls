@@ -1,0 +1,110 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Humat - Cognition ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to Set-Social-Dimensions ; HUMAT-oriented
+  ; calculate % of alters who choose A and B and calculate social satisfaction sof these BAs
+   let #alters count link-neighbors
+   let percentA 0
+   let #A count link-neighbors with [behaviour = "A"]
+   ;foreach alter-representation-list [x -> if item 3 x = "A" [set  #A #A + 1]]
+   set percentA #A / #alters
+   set social-satisfaction-A normalized-min-max percentA 0 1 -1 1
+   let percentB 0
+   let #B count link-neighbors with [behaviour = "B"]
+   ;foreach alter-representation-list [x -> if item 3 x = "B" [set  #B #B + 1]]
+   set percentB #B / #alters
+   set social-satisfaction-B normalized-min-max percentB 0 1 -1 1
+  
+  ; calculate social evaluations
+  set social-evaluation-A social-importance * social-satisfaction-A
+  set social-evaluation-B social-importance * social-satisfaction-B
+  set evaluations-list-A (list (social-evaluation-A) (motive-1-evaluation-A) (motive-2-evaluation-A) (motive-3-evaluation-A) (motive-4-evaluation-A) (motive-5-evaluation-A))
+  set evaluations-list-B (list (social-evaluation-B) (motive-1-evaluation-B) (motive-2-evaluation-B) (motive-3-evaluation-B) (motive-4-evaluation-B) (motive-5-evaluation-B))
+  ; set final satisfactions from BAs at setup stage
+  set satisfaction-A (social-evaluation-A + motive-1-evaluation-A + motive-2-evaluation-A + motive-3-evaluation-A + motive-4-evaluation-A + motive-5-evaluation-A) / 6
+  set satisfaction-B (social-evaluation-B + motive-1-evaluation-B + motive-2-evaluation-B + motive-3-evaluation-B + motive-4-evaluation-B + motive-5-evaluation-B)  / 6
+  ; calculate cognitive dissonances for BAs (A and B)
+  ; dis-satisfying-status-BA [evaluations-list-BA]
+  set dissatisfying-A Dissatisfying-Status-BA evaluations-list-A
+  set satisfying-A Satisfying-Status-BA evaluations-list-A
+  set dissatisfying-B Dissatisfying-Status-BA evaluations-list-B
+  set satisfying-B Satisfying-Status-BA evaluations-list-B
+  set dissonance-A Dissonance-Status-A satisfying-A dissatisfying-A
+  set dissonance-B Dissonance-Status-B satisfying-B dissatisfying-B
+  ; calculating the need for dissonance reduction - a BA invokes the need to reduce dissonance if the level of dissonance for BA exceeds the dissonance-threshold
+  set dissonance-strength-A (dissonance-A - dissonance-tolerance) / (1 - dissonance-tolerance)
+  if dissonance-strength-A < 0 [set dissonance-strength-A 0] ; if the dissonance level a behavioural alternative i (A) [Dij tn] does not exceed the individual tolerance threshold of HUMAT j [Tj], HUMAT j does not experience any dissonance: [Dij tn] < [Tj] -> [Fij tn] = 0
+  set dissonance-strength-B (dissonance-B - dissonance-tolerance) / (1 - dissonance-tolerance)
+  if dissonance-strength-B < 0 [set dissonance-strength-B 0]
+end
+
+to Calc-Dilemma ; HUMAT-oriented
+   ; update dilemmas
+    ifelse behaviour = "A"
+    [ ; if either all >= 0 of all
+       if-else (motive-1-evaluation-A >= 0
+        and social-evaluation-A >= 0
+        and motive-2-evaluation-A >= 0
+        and motive-3-evaluation-A >= 0
+        and motive-4-evaluation-A >= 0
+        and motive-5-evaluation-A >= 0)
+      or (motive-1-evaluation-A <= 0
+        and social-evaluation-A <= 0
+        and motive-2-evaluation-A <= 0
+        and motive-3-evaluation-A <= 0
+        and motive-4-evaluation-A <= 0
+        and motive-5-evaluation-A <= 0)
+      [set dilemma? 0 ][set dilemma? 1]
+  ]
+  [
+      if-else (motive-1-evaluation-B >= 0
+        and social-evaluation-B >= 0
+        and motive-2-evaluation-B >= 0
+        and motive-3-evaluation-B >= 0
+        and motive-4-evaluation-B >= 0
+        and motive-5-evaluation-B >= 0)
+      or (motive-1-evaluation-B <= 0
+        and social-evaluation-B <= 0
+        and motive-2-evaluation-B <= 0
+        and motive-3-evaluation-B <= 0
+        and motive-4-evaluation-B <= 0
+        and motive-5-evaluation-B <= 0)
+      [set dilemma? 0 ][set dilemma? 1]
+  ]
+end
+
+to Set-Dissonance-Strength ; HUMAT-oriented
+  ; setting dissonance strength and colours
+  ifelse behaviour = "A"
+    [
+      set dissonance-strength dissonance-strength-A
+      set color lime + Shading dissonance-strength-A
+      set satisfaction satisfaction-A
+    ]
+    [
+      set dissonance-strength dissonance-strength-B
+      set color magenta + Shading dissonance-strength-B
+      set satisfaction satisfaction-B
+    ]
+end
+
+to Update-Dilemmas
+  ; updating lists of who behaves similar to you ; to do: want it the go procedure, but after making sure that it is the representation, not the reality
+  ; updating social satisfactions
+  ; updating dissonances
+  ; updating dilemmas
+  ; updating colours
+ 
+  ask humats [
+    ; set social dimension: social satisfaction from BAs, evaluations of BAs
+    Set-Social-Dimensions
+    Calc-Dilemma
+    Set-Dissonance-Strength
+    ; setting dissonance strength and colours
+   
+  ]
+  
+  ;; if motive-1-importance > x set meeting-participant to 1
+  ;; for each motive (can make sider to vary humats participate
+end

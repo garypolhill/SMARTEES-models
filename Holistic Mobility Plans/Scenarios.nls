@@ -1,0 +1,140 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;     Policy scenarios     ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;Group-meetings;;;
+to procedure-name-townhallmeeting;; Townhall meeting, 50 humats with higher education and older then 24 meet and update their importances on motive 4 (park activities) and motive 5 (environmental awareness)
+  ask n-of 50 humats with [(age = "25-64" and education-level = "higher") or (age = "65+" and education-level = "higher")][
+    set meetingparticipation 1
+  ]
+  let meeting-average-motive-4-importance max [motive-4-importance] of humats with [meetingparticipation = 1]
+  ask humats with [ motive-4-importance < meeting-average-motive-4-importance] [
+    set motive-4-importance  motive-4-importance + (0.5 * motive-4-importance)  
+  ]
+  let meeting-average-motive-5-importance max [motive-5-importance] of humats with [meetingparticipation = 1]
+  ask humats with [ motive-5-importance < meeting-average-motive-5-importance] [
+    set motive-5-importance motive-5-importance + (0.5 * motive-5-importance)  
+  ]
+  ask humats with [meetingparticipation = 1][ 
+    set meetingparticipation 0
+    Update-Motive-Evaluations
+    Update-Dissonances
+    Choose-Action-Go
+  ]
+end
+
+
+to procedure-name-neighborhoodmeeting ;;neighborhood meeting, 50 humats that live in teh districts around teh park update their importances for motives 1(safety), 3(transport), 4(park activities) and 5 (environmental awareness)
+  ask n-of 50 humats with [district-id-humat = 1 or district-id-humat = 2 or district-id-humat = 7][
+    set meetingparticipation 1
+  ]
+  let meeting-average-motive-1-importance max[motive-1-importance] of humats with [meetingparticipation = 1]
+  ask humats with [motive-1-importance < meeting-average-motive-1-importance] [
+    set motive-1-importance  motive-1-importance + (0.5 * motive-1-importance)  
+  ]
+  let meeting-average-motive-3-importance max [motive-3-importance] of humats with [meetingparticipation = 1]
+  ask humats with [motive-3-importance < meeting-average-motive-3-importance] [
+    set motive-3-importance motive-3-importance + (0.5 * motive-3-importance)  
+  ]
+  let meeting-average-motive-4-importance max [motive-4-importance] of humats with [meetingparticipation = 1]
+  ask humats with [motive-4-importance < meeting-average-motive-4-importance] [
+    set motive-4-importance  motive-4-importance + (0.5 * motive-4-importance)  
+  ]
+  let meeting-average-motive-5-importance max [motive-5-importance] of humats with [meetingparticipation = 1]
+  ask humats with [motive-5-importance < meeting-average-motive-5-importance] [
+    set motive-5-importance motive-5-importance + (0.5 * motive-5-importance)  
+  ]
+  ask humats with [meetingparticipation = 1][ 
+    set meetingparticipation 0
+    Update-Motive-Evaluations
+    Update-Dissonances
+    Choose-Action-Go
+  ]
+end
+
+
+;;;pricing samso;;;
+to Target-Randomly-Positive-Motive-5 ; 
+  let unsatisfied humats with [motive-5-satisfaction-A < 0]
+  let %10 round (0.1 * count unsatisfied)
+  let importaces-list sort-on [(- motive-5-importance)] unsatisfied
+  let valuebound [motive-5-importance] of item %10 importaces-list
+  ask unsatisfied with [valuebound < motive-3-importance][
+     set motive-5-satisfaction-A 1
+     Update-Motive-Evaluations
+     Update-Dissonances
+     Choose-Action-Go
+   ]
+
+end
+
+
+;;;Media campaigns;;;
+to Target-Randomly-Positive-Motive-3 ; transport
+  let unsatisfied humats with [motive-3-satisfaction-A < 0]
+  let %10 round (0.1 * count unsatisfied)
+  let importaces-list sort-on [(- motive-3-importance)] unsatisfied
+  let valuebound [motive-3-importance] of item %10 importaces-list
+  ask unsatisfied with [valuebound < motive-3-importance][
+     set motive-3-satisfaction-A 1
+     Update-Motive-Evaluations
+     Update-Dissonances
+     Choose-Action-Go
+   ]
+
+end
+
+to Target-Randomly-Negative-Motive-2 ; shopping
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13] [ x -> 
+    let unhappy-in-district HUMATS with [motive-2-satisfaction-A > 0 and district-id-humat = x]
+    let dist (0.1 * (count humats with [district-id-humat = x]))
+    ifelse (count unhappy-in-district ) > dist [
+      ask unhappy-in-district [
+           set motive-2-satisfaction-A -1
+           Update-Motive-Evaluations
+           Update-Dissonances
+           Choose-Action-Go
+    ]]
+      [
+      ask n-of ceiling dist humats with [district-id-humat = x] [
+           set motive-2-satisfaction-A -1
+           Update-Motive-Evaluations
+           Update-Dissonances
+           Choose-Action-Go
+   ]
+  ]
+]
+end
+
+to Target-Randomly-Importance-Motive-1 ; accident
+  foreach [1 2 3 4 5 6 7 8 9 10 11 12 13] [ x -> 
+    ask n-of (0.1 * count humats with [district-id-humat = x]) HUMATS with [district-id-humat = x and motive-1-satisfaction-B = 1] [
+      ifelse motive-1-importance + 0.75 > 1 [ set motive-1-importance 1] [set motive-1-importance motive-1-importance + 0.75
+      set motive-1-satisfaction-B -1
+      set motive-1-satisfaction-A 1]
+     Update-Motive-Evaluations
+     Update-Dissonances
+     Choose-Action-Go
+   ]
+  ]
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Scenario-related reporters;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;to-report Positive-Campaign [strength motive-satisfaction-BA] ; strength - % <0;1> of current need satisfaction that HUMAT increases their motive satisfaction
+;  ifelse motive-satisfaction-BA + strength * abs motive-satisfaction-BA > 1 [report 1] [report motive-satisfaction-BA + strength * abs motive-satisfaction-BA]
+;  Update-Motive-Evaluations
+;  ;Update-Dissonances-Humat
+;  Choose-Action-Go
+;end
+;
+;
+;to-report Negative-Campaign [strength motive-satisfaction-BA] ; strength - % <0;1> of current need satisfaction that HUMAT decreases their motive satisfaction
+;  ifelse motive-satisfaction-BA - strength * abs motive-satisfaction-BA < -1 [report -1] [report motive-satisfaction-BA - strength * abs motive-satisfaction-BA]
+;  Update-Motive-Evaluations
+;  ;Update-Dissonances-Humat
+;  Choose-Action-Go
+;end
+;

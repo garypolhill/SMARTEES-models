@@ -1,0 +1,190 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Humat - initial Motive (Importances, satisfactions), Bahaviours , Representations ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to Set-Motive-Importances
+  ask humats [
+    set social-importance Random-Normal-Trunc 0.5 0.14 0 1
+    set motive-1-importance Motive-1-Importance-Reporter
+    set motive-2-importance Motive-2-Importance-Reporter
+    set motive-3-importance Motive-3-Importance-Reporter
+    set motive-4-importance Motive-4-Importance-Reporter
+    set motive-5-importance Motive-5-Importance-Reporter
+    set motives-importances-sum sum (list (motive-1-importance) (motive-2-importance) (motive-3-importance) (motive-4-importance) (motive-5-importance))
+  ]
+end
+
+to Set-Motive-Satisfactions
+  ask humats [
+    ifelse distance patch -53 41 < 30 [ ; where the car traffic would be directed
+     set motive-1-satisfaction-A ifelse-value (random 100 >= 80) [1][-1] ;kids
+     set motive-1-satisfaction-B ifelse-value (random 100 >= 40) [-1][1]][
+     set motive-1-satisfaction-A ifelse-value (random 100 >= 40) [1][-1] 
+     set motive-1-satisfaction-B ifelse-value (random 100 >= 40) [-1][1]]
+    set motive-2-satisfaction-A ifelse-value (random 100 >= 5) [-1][1] ;shopping
+    set motive-2-satisfaction-B ifelse-value (random 100 >= 5) [1][-1]
+    ifelse economic-activity = "student" [
+      set motive-3-satisfaction-A ifelse-value (random 100 >= 10) [1][-1] ;transport
+      set motive-3-satisfaction-B ifelse-value (random 100 >= 10) [-1][1]][
+      set motive-3-satisfaction-A ifelse-value (random 100 >= 10) [-1][1]
+      set motive-3-satisfaction-B ifelse-value (random 100 >= 10) [1][-1]]
+    ifelse distance patch -35 7 < 30 [
+     set motive-4-satisfaction-A ifelse-value (random 100 >= 40) [1][-1] ;activities
+     set motive-4-satisfaction-B ifelse-value (random 100 >= 40) [-1][1]][
+     set motive-4-satisfaction-A ifelse-value (random 100 >= 5) [1][-1] 
+     set motive-4-satisfaction-B ifelse-value (random 100 >= 5) [-1][1]]
+    set motive-5-satisfaction-A ifelse-value (random 100 >= 5) [1][-1] ;environment
+    set motive-5-satisfaction-B ifelse-value (random 100 >= 5) [-1][1]
+]
+  ask humats [Update-Motive-Evaluations]
+end
+
+
+
+to Set-Behaviour
+ ask humats [
+    set evaluations-list-A (list (social-evaluation-A) (motive-1-evaluation-A) (motive-2-evaluation-A) (motive-3-evaluation-A) (motive-4-evaluation-A) (motive-5-evaluation-A))
+    set evaluations-list-B (list (social-evaluation-A) (motive-1-evaluation-B) (motive-2-evaluation-B) (motive-3-evaluation-B) (motive-4-evaluation-B) (motive-5-evaluation-B))
+    ; set satisfactions from BAs ; excluding social dimension
+    set satisfaction-A (motive-1-evaluation-A + motive-2-evaluation-A + motive-3-evaluation-A + motive-4-evaluation-A + motive-5-evaluation-A) / 5
+    set satisfaction-B (motive-1-evaluation-B + motive-2-evaluation-B + motive-3-evaluation-B + motive-4-evaluation-B + motive-5-evaluation-B) / 5
+    ; choose initial behaviour
+    ; chosen of the basis of experiential needs and values; if same satisfactions from both BAs, choose randomly
+     ;from version 6.1 of Netlogo, this piece can be signifficantly improved
+    ifelse satisfaction-A < satisfaction-B
+    [set behaviour "B" set satisfaction satisfaction-B] [
+      ifelse satisfaction-A = satisfaction-B [
+        set behaviour one-of (list "A" "B")
+        ifelse behaviour = "A"
+        [set satisfaction satisfaction-A]
+        [set satisfaction satisfaction-B]
+      ]
+      [set behaviour "A" set satisfaction satisfaction-A]
+    ]
+    set dissonance-tolerance Random-Normal-Trunc 0.5 0.14 0 1 ; set dissonance tolerance
+  ]
+  ask humats [
+    Representation-List ; go through alter-representation-list and count the alters, who behave similarily
+    Set-Social-Dimensions ; set social dimension: social satisfaction from BAs, evaluations of BAs
+    ; update dilemmas
+    Calc-Dilemma ; Not set-dissonance-strength?
+  ]
+  Choose-Action
+end
+
+to Choose-Action ; HUMAT-oriented
+  ; The BA comparison dimensions include:
+  ;* overall satisfaction - preference for more satistying, if similarly satisfying (+/- 0.2 = 10% of the theoretical satisfaction range <-1;1>), then
+  ;* dissonance level - preference for less dissonant, if similarily dissonant (+/- 0.1 = 10% of the theoretical dissonance range <0;1>), then
+  ;* satisfaction on experiential need - preference for more satisfying, if similarly satisfying on experiantial need (+/- 0.2 = 10% of the theoretical experiantial satisfaction range <-1;1>), then
+  ;* random choice.
+  ask HUMATS [
+    (ifelse Further-Comparison-Needed? satisfaction-A satisfaction-B 2 [Compare-Dissonances]
+      [ifelse satisfaction-A > satisfaction-B
+        [set behaviour "A" set satisfaction satisfaction-A]
+        [set behaviour "B" set satisfaction satisfaction-B]]
+    )
+  ]
+end
+
+to Compare-Dissonances ; HUMAT-oriented
+  (ifelse Further-Comparison-Needed? dissonance-A dissonance-B 1 [Choose-Randomly] ; usually Compare-Experiential-Needs, raplaced for usecase because it#s unclear how to satisfy hedonisms
+    [ifelse dissonance-A < dissonance-B
+      [set behaviour "A" set satisfaction satisfaction-A]
+      [set behaviour "B" set satisfaction satisfaction-B]])
+end
+
+
+to Choose-Randomly ; HUMAT-oriented
+  set behaviour one-of (list "A" "B")
+  ifelse behaviour = "A"
+  [set satisfaction satisfaction-A]
+  [set satisfaction satisfaction-B]
+end
+
+to Set-Alter-Representations
+  ask HUMATS [
+    ; inquiring-list sorted:
+    ;(1) ascendingly by inquired? (not inquired with first),
+    ;(2) descendingly by same-BA? (same behaviour first),
+    ;(3) descendingly by persuasion (strongest persuasion first).
+    set inquiring-list Sort-List alter-representation-list 1 4 56 ;; 29
+    ; signaling-list sorted:
+    ;(1) ascendingly by signaled? (not signaled to first),
+    ;(2) descendingly by not the same-BA? (different behaviour first),
+    ;(3) descendingly by gullibility (the most easily persuaded first).
+    set signaling-list Sort-List alter-representation-list 2 5 57 ;;; 30
+    set inquired-humat []
+    set inquiring-humat []
+    set signaled-humat []
+    set signaling-humat []
+  ]
+end
+
+
+to Representation-List ; Humat-oriented
+  ; create alter representation lists for each alter  ; to do:if behaviours unobservable - here add the guessing parameter
+    foreach sort link-neighbors [x ->
+      let working-list ( list
+        [who] of x                              ;item 0 who
+        0                                       ;item 1 inquired? 0 for not inquired with, 1 for inquired with already
+        0                                       ;item 2 signaled? 0 for not signaled to, 1 for signaled to already
+        Alter-Guess-Behaviour? ([behaviour] of x) ;item 3 behaviour ; this is a guessed behaviour with 20% error rate
+        Same-BA? behaviour [behaviour] of x     ;item 4 1 for same guessed behaviour; 0 for different guessed behaviour ; used for inquiring
+        ifelse-value (Same-BA? behaviour [behaviour] of x  = 1) [0] [1] ; item 5  1 for different guessed behaviour and 0 for same guessed behaviour; used for signaling - coding is the other way around for the purpose of using the same reporter for sorting lists as in the case of inquiring
+        0                                       ;item 6  [social-importance] of x
+        0                                       ;item 7  [motive-1-importance] of x
+        0                                       ;item 8  [motive-2-importance] of x
+        0                                       ;item 9  [motive-3-importance] of x
+        0                                       ;item 10 [motive-4-importance] of x
+        0                                       ;item 11 [motive-5-importance] of x
+        0                                       ;item 12 [social-satisfaction-A] of x
+        0                                       ;item 13 [motive-1-satisfaction-A] of x
+        0                                       ;item 14 [motive-2-satisfaction-A] of x
+        0                                       ;item 15 [motive-3-satisfaction-A] of x
+        0                                       ;item 16 [motive-4-satisfaction-A] of x
+        0                                       ;item 17 [motive-5-satisfaction-A] of x
+        0                                       ;item 18 [social-satisfaction-B] of x
+        0                                       ;item 19 [motive-1-satisfaction-B] of x
+        0                                       ;item 20 [motive-2-satisfaction-B] of x
+        0                                       ;item 21 [motive-3-satisfaction-B] of x
+        0                                       ;item 22 [motive-4-satisfaction-B] of x
+        0                                       ;item 23 [motive-5-satisfaction-B] of x
+        0                                       ;item 24 similarity-A-motive-1-importance - similarity between the importance of needs; only > 0 if the given BA satisfies that group of needs in a similar direction for the alter and for the ego
+        0                                       ;item 25 simiarity-A-motive-2-importance
+        0                                       ;item 26 simiarity-A-motive-3-importance
+        0                                       ;item 27 simiarity-A-motive-4-importance
+        0                                       ;item 28 simiarity-A-motive-5-importance
+        0                                       ;item 29 similarity-B-motive-1-importance - similarity between he importance of needs; only > 0 if the given BA satisfies that group of needs in a similar direction for the alter and for the ego
+        0                                       ;item 30 similarity-B-motive-2-importance
+        0                                       ;item 31 simiarity-B-motive-3-importance
+        0                                       ;item 32 simiarity-B-motive-4-importance
+        0                                       ;item 33 simiarity-B-motive-5-importance
+        0                                       ;item 34 relative-aspiration-influenced-ego - relative social appeal/status (aspiration characteristic) in case of inquiring
+        0                                       ;item 35 relative-aspiration-influenced-alter - relative social appeal/status (aspiration characteristic) in case of signaling
+        0                                       ;item 36 inquiring-persuasion-A-motive-1
+        0                                       ;item 37 inquiring-persuasion-A-motive-2
+        0                                       ;item 38 inquiring-persuasion-A-motive-3
+        0                                       ;item 39 inquiring-persuasion-A-motive-4
+        0                                       ;item 40 inquiring-persuasion-A-motive-5
+        0                                       ;item 41 inquiring-persuasion-B-motive-1
+        0                                       ;item 42 inquiring-persuasion-B-motive-2
+        0                                       ;item 43 inquiring-persuasion-B-motive_3
+        0                                       ;item 44 inquiring-persuasion-B-motive_5
+        0                                       ;item 45 inquiring-persuasion-B-motive_6
+        0                                       ;item 46 signaling-persuasion-A-motive-1
+        0                                       ;item 47 signaling-persuasion-A-motive-2
+        0                                       ;item 48 signaling-persuasion-A-motive_3
+        0                                       ;item 49 signaling-persuasion-A-motive_4
+        0                                       ;item 50 signaling-persuasion-A-motive_5
+        0                                       ;item 51 signaling-persuasion-B-motive-1
+        0                                       ;item 52 signaling-persuasion-B-motive-2
+        0                                       ;item 53 signaling-persuasion-B-motive_3
+        0                                       ;item 54 signaling-persuasion-B-motive_4
+        0                                       ;item 55 signaling-persuasion-B-motive_5
+        0                                       ;item 56 inquiring-persuasion
+        0                                       ;item 57 signaling-persuasion
+      )
+      set alter-representation-list lput working-list alter-representation-list
+    ]
+end

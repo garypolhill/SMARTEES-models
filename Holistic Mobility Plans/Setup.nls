@@ -1,0 +1,130 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Setup and Go procedures (incl. GIS) ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to Setup
+  clear-all
+  Create-Groningen
+  CSV-1994
+  Create-Agents
+  Create-Networks
+  Setup-Humat
+  Setup-Display
+  Display_Statistics
+  Color-Districts-Preferences
+  print "Setup complete"
+  reset-ticks
+end
+
+to Go
+  print "SignAL"
+  Signal
+  print "Inquire"
+  Inquire
+  print "Update-Dilemmas"
+  Update-Dilemmas
+  print "TICK"
+  tick
+  print "GO VOTE"
+  Go-Vote
+  print "COLOR"
+  Color-Districts-Voters
+  if ticks = intervention_time and policy_scenarios = 2 [Target-Randomly-Positive-Motive-3] ;; affirmative transport positive
+  if ticks = intervention_time and policy_scenarios = 3 [Target-Randomly-Negative-Motive-2] ;; shopping conveneince negative
+  if ticks = intervention_time and policy_scenarios = 4 [Target-Randomly-Importance-Motive-1] ;; car accident
+  if ticks = intervention_time and policy_scenarios = 5 [procedure-name-neighborhoodmeeting] ;; neighboorhood meeting against closure
+  if ticks = intervention_time and policy_scenarios = 6 [procedure-name-townhallmeeting] ;; Townhall meeting pro closure
+  if ticks = intervention_time and policy_scenarios = 7 [Target-Randomly-Positive-Motive-5] ;; pricing for joinging
+  if ticks = intervention_time and policy_scenarios = 1 [] ;; no scenario default setting
+  if (ticks >= end-ticks) [ 
+    print "END"
+    Go-Vote
+    ; Color-Districts-Voters
+    ;  Display-District-Voters-%A
+    ;  Color-Districts-Voters1994
+    stop 
+  ]
+end
+
+to Create-Groningen
+  ask patches [set pcolor white]
+  set groningen_population (csv:from-file "groningen population characteristics.csv" ";")
+  set buildings gis:load-dataset "buildings.shp"
+  set roads gis:load-dataset "roads.shp"
+  set park gis:load-dataset "Noorderplantsoen.shp"
+  set districts gis:load-dataset "districts_networks.shp"
+  gis:set-world-envelope (gis:envelope-union-of  
+    (gis:envelope-of roads)
+    (gis:envelope-of buildings)
+    (gis:envelope-of park)
+    (gis:envelope-of districts)
+    )
+  ; Using gis:apply-coverage to copy values from a polygon dataset to a patch variable
+  gis:apply-coverage buildings "FCLASS" residential
+  gis:apply-coverage districts "ID" district-id-patch
+  gis:apply-coverage districts "NAME" district-name-patch
+  gis:apply-coverage districts "NETWORK" district-nbors-patch
+end
+
+to Create-Agents
+  foreach groningen_population
+  [row ->
+    create-humats round(item 6 row * N-pop)[
+      set district-name-humat (item 0 row)
+      set district-id-humat (item 1 row)
+      set education-level (item 2 row)
+      set economic-activity (item 3 row)
+      set gender (item 4 row)
+      set age (item 5 row)
+      set shape "circle"
+      set size .8
+      set color red
+      set alter-representation-list []
+      set ses (ifelse-value
+        education-level = "lower" [0.1]
+        education-level = "middle" [0.5]
+        [0.9]     
+      )
+    ]
+  ]
+  let x count humats with [economic-activity = "student"] / 2 
+  ask n-of x humats with [economic-activity = "student"] [die]
+end
+
+to Create-Networks
+  Friend-Networks
+  ask humats [set size 0.8]
+  ask links [hide-link]
+  Work-Networks
+  ask humats [set size 0.8]
+  ask links [hide-link]
+  Find-Home
+  Neighbor-Networks
+  ask links [hide-link]
+end
+
+to Find-Home
+  ask humats [
+    move-to one-of patches with [district-id-patch = [district-id-humat] of myself and residential = "building"]
+  ]
+end
+
+to Setup-Humat
+  Set-Motive-Importances
+  Set-Motive-Satisfactions
+  Set-Behaviour
+  Set-Alter-Representations
+  Update-Dilemmas
+end
+
+to Setup-Display
+  ;color gis shapes
+  gis:set-drawing-color 36
+  gis:draw buildings 0.4
+  gis:set-drawing-color black
+  gis:draw roads 0.6
+  gis:draw districts 1
+  gis:draw park 5
+  gis:fill park 3
+  Color-Districts-Normal
+end
